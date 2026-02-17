@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Survey {
+  id          String           @id @default(cuid())
+  title       String
+  description String?
+  status      String           @default("draft")
+  questions   Json
+  params      Json             @default("[]")
+  responses   Response[]
+  dataEntries SurveyDataEntry[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Response {
+  id          String           @id @default(cuid())
+  surveyId    String
+  survey      Survey           @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  answers     Json
+  params      Json             @default("{}")
+  dataEntryId String?
+  dataEntry   SurveyDataEntry? @relation(fields: [dataEntryId], references: [id])
+  createdAt   DateTime         @default(now())
+
+  @@index([surveyId])
+  @@index([dataEntryId])
+}
+
+model SurveyDataEntry {
+  id        String     @id @default(cuid())
+  surveyId  String
+  survey    Survey     @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  values    Json       @default("{}")
+  label     String?
+  responses Response[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([surveyId])
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  sessions     Session[]
+  createdAt    DateTime  @default(now())
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
