@@ -389,6 +389,45 @@ describe("POST /survey/:id/submit", () => {
     });
   });
 
+  test("sendCopy: true のとき executionCtx.waitUntil にメール送信 Promise を渡す", async () => {
+    mockSurveyFindUnique.mockResolvedValue({
+      id: "survey-1",
+      title: "テストアンケート",
+      description: null,
+      status: "active",
+      questions: [{ type: "text", id: "q1", label: "ご意見" }],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockResponseCreate.mockResolvedValue({
+      id: "resp-1",
+      surveyId: "survey-1",
+      answers: { q1: "良い" },
+      createdAt: new Date(),
+    });
+
+    const mockWaitUntil = vi.fn();
+    const app = createApp();
+    const res = await app.request(
+      "/survey/survey-1/submit",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          answers: { q1: "良い" },
+          sendCopy: true,
+          respondentEmail: "test@example.com",
+        }),
+      },
+      {},
+      { waitUntil: mockWaitUntil, passThroughOnException: vi.fn() } as never
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockWaitUntil).toHaveBeenCalledTimes(1);
+    expect(mockWaitUntil.mock.calls[0][0]).toBeInstanceOf(Promise);
+  });
+
   test("params 付きで回答を送信する", async () => {
     mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
