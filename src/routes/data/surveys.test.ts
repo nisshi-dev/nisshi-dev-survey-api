@@ -1,34 +1,36 @@
 import { Hono } from "hono";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { HonoEnv } from "../../index";
 import surveysApp from "./surveys";
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    survey: {
-      findMany: vi.fn(),
-      create: vi.fn(),
-      findUnique: vi.fn(),
-    },
-    response: {
-      createMany: vi.fn(),
-    },
-    surveyDataEntry: {
-      findMany: vi.fn(),
-      create: vi.fn(),
-    },
-  },
-}));
+const mockFindMany = vi.fn();
+const mockCreate = vi.fn();
+const mockFindUnique = vi.fn();
+const mockCreateMany = vi.fn();
+const mockEntryFindMany = vi.fn();
+const mockEntryCreate = vi.fn();
 
-const { prisma } = await import("@/lib/db");
-const mockFindMany = vi.mocked(prisma.survey.findMany);
-const mockCreate = vi.mocked(prisma.survey.create);
-const mockFindUnique = vi.mocked(prisma.survey.findUnique);
-const mockCreateMany = vi.mocked(prisma.response.createMany);
-const mockEntryFindMany = vi.mocked(prisma.surveyDataEntry.findMany);
-const mockEntryCreate = vi.mocked(prisma.surveyDataEntry.create);
+const mockPrisma = {
+  survey: {
+    findMany: mockFindMany,
+    create: mockCreate,
+    findUnique: mockFindUnique,
+  },
+  response: {
+    createMany: mockCreateMany,
+  },
+  surveyDataEntry: {
+    findMany: mockEntryFindMany,
+    create: mockEntryCreate,
+  },
+};
 
 function createApp() {
-  const app = new Hono();
+  const app = new Hono<HonoEnv>();
+  app.use("/*", async (c, next) => {
+    c.set("prisma", mockPrisma as never);
+    await next();
+  });
   app.route("/data/surveys", surveysApp);
   return app;
 }
@@ -60,7 +62,7 @@ describe("POST /data/surveys", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("survey-1");
     expect(body.status).toBe("draft");
     expect(body.createdAt).toBe(createdAt.toISOString());
@@ -91,7 +93,7 @@ describe("POST /data/surveys", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.status).toBe("active");
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -122,7 +124,7 @@ describe("POST /data/surveys", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.params).toEqual(params);
   });
 });
@@ -149,7 +151,7 @@ describe("GET /data/surveys", () => {
     const app = createApp();
     const res = await app.request("/data/surveys");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.surveys).toHaveLength(1);
     expect(body.surveys[0].id).toBe("survey-1");
     expect(body.surveys[0].createdAt).toBe(createdAt.toISOString());
@@ -184,12 +186,12 @@ describe("GET /data/surveys/:id", () => {
           updatedAt: new Date(),
         },
       ],
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/data/surveys/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("survey-1");
     expect(body.dataEntries).toHaveLength(1);
     expect(body.dataEntries[0].id).toBe("entry-1");
@@ -203,7 +205,7 @@ describe("GET /data/surveys/:id", () => {
     const app = createApp();
     const res = await app.request("/data/surveys/nonexistent");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 });
@@ -240,7 +242,7 @@ describe("POST /data/surveys/:id/responses", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.count).toBe(2);
     expect(mockCreateMany).toHaveBeenCalledWith({
       data: [
@@ -306,7 +308,7 @@ describe("POST /data/surveys/:id/responses", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -332,7 +334,7 @@ describe("POST /data/surveys/:id/responses", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey is not active");
   });
 });
@@ -364,12 +366,12 @@ describe("GET /data/surveys/:id/data-entries", () => {
         createdAt: new Date("2026-02-17T00:00:00.000Z"),
         updatedAt: new Date(),
       },
-    ] as never);
+    ]);
 
     const app = createApp();
     const res = await app.request("/data/surveys/survey-1/data-entries");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.dataEntries).toHaveLength(1);
     expect(body.dataEntries[0].id).toBe("entry-1");
     expect(body.dataEntries[0].responseCount).toBe(3);
@@ -381,7 +383,7 @@ describe("GET /data/surveys/:id/data-entries", () => {
     const app = createApp();
     const res = await app.request("/data/surveys/nonexistent/data-entries");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 });
@@ -423,7 +425,7 @@ describe("POST /data/surveys/:id/data-entries", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("entry-new");
     expect(body.values).toEqual({ version: "v2.0" });
     expect(body.label).toBe("v2.0 リリース");
@@ -441,7 +443,7 @@ describe("POST /data/surveys/:id/data-entries", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -465,7 +467,7 @@ describe("POST /data/surveys/:id/data-entries", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toContain("Invalid keys");
   });
 });

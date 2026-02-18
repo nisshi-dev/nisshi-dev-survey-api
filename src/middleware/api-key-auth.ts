@@ -1,8 +1,22 @@
-import crypto from "node:crypto";
 import type { MiddlewareHandler } from "hono";
+import type { HonoEnv } from "../index.js";
 
-export const apiKeyAuth: MiddlewareHandler = async (c, next) => {
-  const expected = process.env.NISSHI_DEV_SURVEY_API_KEY;
+const encoder = new TextEncoder();
+
+async function timingSafeCompare(a: string, b: string): Promise<boolean> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(a),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(a));
+  return crypto.subtle.verify("HMAC", key, signature, encoder.encode(b));
+}
+
+export const apiKeyAuth: MiddlewareHandler<HonoEnv> = async (c, next) => {
+  const expected = c.env.NISSHI_DEV_SURVEY_API_KEY;
   if (!expected) {
     return c.json({ error: "API key not configured" }, 500);
   }
@@ -12,12 +26,9 @@ export const apiKeyAuth: MiddlewareHandler = async (c, next) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const expectedBuf = Buffer.from(expected);
-  const providedBuf = Buffer.from(provided);
-
   if (
-    expectedBuf.length !== providedBuf.length ||
-    !crypto.timingSafeEqual(expectedBuf, providedBuf)
+    expected.length !== provided.length ||
+    !(await timingSafeCompare(expected, provided))
   ) {
     return c.json({ error: "Unauthorized" }, 401);
   }

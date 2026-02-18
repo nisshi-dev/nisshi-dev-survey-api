@@ -42,8 +42,7 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 
 ### 開発
 
-- `npm run dev` — 開発サーバー起動（`@hono/node-server`、ポート 3000）
-- `npm run dev:worker` — Workers 環境でローカルテスト（`wrangler dev`）
+- `npm run dev` — 開発サーバー起動（`wrangler dev`）
 
 ### テスト
 
@@ -60,7 +59,7 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 
 ### コード生成
 
-- `npm run generate:openapi` — OpenAPI JSON をファイルに出力
+- `npm run generate:openapi` — OpenAPI JSON をファイルに出力（要: `npm run dev` 起動中）
 
 ## 環境変数
 
@@ -74,7 +73,7 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 
 ## Cloudflare Workers デプロイ
 
-- `npm run deploy` — `wrangler deploy` でデプロイ
+- `npm run deploy` — `wrangler deploy --minify` でデプロイ
 - シークレットは `wrangler secret put <NAME>` で設定（`DATABASE_URL`, `ALLOWED_ORIGIN`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `NISSHI_DEV_SURVEY_API_KEY`）
 - `nodejs_compat` フラグにより `node:crypto`, `node:net` 等の Node.js API を利用可能
 

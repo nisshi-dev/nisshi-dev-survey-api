@@ -3,6 +3,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { openAPIRouteHandler } from "hono-openapi";
+import type { PrismaClient } from "./generated/prisma/client.js";
+import withPrisma from "./lib/prisma.js";
 import { adminAuth } from "./middleware/admin-auth.js";
 import { apiKeyAuth } from "./middleware/api-key-auth.js";
 import adminAuthRoutes from "./routes/admin/auth.js";
@@ -10,20 +12,39 @@ import adminSurveys from "./routes/admin/surveys.js";
 import dataSurveys from "./routes/data/surveys.js";
 import survey from "./routes/survey.js";
 
-const app = new Hono();
+interface Bindings {
+  ALLOWED_ORIGIN: string;
+  DATABASE_URL: string;
+  NISSHI_DEV_SURVEY_API_KEY: string;
+  RESEND_API_KEY: string;
+  RESEND_FROM_EMAIL: string;
+}
 
+export interface HonoEnv {
+  Bindings: Bindings;
+  Variables: {
+    prisma: PrismaClient;
+    user: { id: string; email: string };
+  };
+}
+
+const app = new Hono<HonoEnv>();
+
+app.use("*", withPrisma);
 app.use("*", logger());
 
 app.use(
-	"*",
-	cors({
-		origin: (origin) => {
-			const allowed = process.env.ALLOWED_ORIGIN;
-			if (!allowed) return origin;
-			return origin === allowed ? origin : null;
-		},
-		credentials: true,
-	}),
+  "*",
+  cors({
+    origin: (origin, c) => {
+      const allowed = c.env.ALLOWED_ORIGIN;
+      if (!allowed) {
+        return origin;
+      }
+      return origin === allowed ? origin : null;
+    },
+    credentials: true,
+  })
 );
 
 app.get("/health", (c) => c.json({ status: "ok" }));

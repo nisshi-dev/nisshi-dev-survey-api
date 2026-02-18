@@ -7,10 +7,8 @@ src/generated/
 openapi.json
 
 # Environment
-.env
-.env.*
-!.env.example
 .dev.vars
+.env
 
 # OS
 .DS_Store
@@ -24,6 +22,9 @@ openapi.json
 
 # Coverage
 coverage/
+
+# Wrangler
+.wrangler
 
 # Cache
 *.tsbuildinfo

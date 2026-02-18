@@ -1,24 +1,20 @@
 {
-	"compilerOptions": {
-		"target": "ES2022",
-		"lib": ["ES2023"],
-		"module": "ESNext",
-		"skipLibCheck": true,
-		"moduleResolution": "bundler",
-		"allowImportingTsExtensions": true,
-		"isolatedModules": true,
-		"moduleDetection": "force",
-		"noEmit": true,
-		"jsx": "react-jsx",
-		"strict": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"noFallthroughCasesInSwitch": true,
-		"noUncheckedIndexedAccess": true,
-		"baseUrl": ".",
-		"paths": {
-			"@/*": ["./src/*"]
-		}
-	},
-	"include": ["src", "scripts"]
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "scripts", "prisma"]
 }

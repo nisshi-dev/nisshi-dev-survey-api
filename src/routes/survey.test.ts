@@ -1,41 +1,49 @@
 import { Hono } from "hono";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { HonoEnv } from "../index";
 import surveyApp from "./survey";
-
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    survey: { findUnique: vi.fn() },
-    response: { create: vi.fn() },
-    surveyDataEntry: { findUnique: vi.fn() },
-  },
-}));
 
 vi.mock("@/lib/email", () => ({
   sendResponseCopyEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
-const { prisma } = await import("@/lib/db");
-const mockFindUnique = vi.mocked(prisma.survey.findUnique);
-const mockCreateResponse = vi.mocked(prisma.response.create);
-const mockEntryFindUnique = vi.mocked(prisma.surveyDataEntry.findUnique);
-
 const { sendResponseCopyEmail } = await import("@/lib/email");
 const mockSendEmail = vi.mocked(sendResponseCopyEmail);
 
+const mockSurveyFindUnique = vi.fn();
+const mockResponseCreate = vi.fn();
+const mockEntryFindUnique = vi.fn();
+
+const mockPrisma = {
+  survey: { findUnique: mockSurveyFindUnique },
+  response: { create: mockResponseCreate },
+  surveyDataEntry: { findUnique: mockEntryFindUnique },
+};
+
 function createApp() {
-  const app = new Hono();
+  const app = new Hono<HonoEnv>({
+    getPath: (req) => new URL(req.url).pathname,
+  });
+  app.use("/*", async (c, next) => {
+    c.set("prisma", mockPrisma as never);
+    c.env = {
+      ...c.env,
+      RESEND_API_KEY: "test-resend-key",
+    } as HonoEnv["Bindings"];
+    await next();
+  });
   app.route("/survey", surveyApp);
   return app;
 }
 
 describe("GET /survey/:id", () => {
   beforeEach(() => {
-    mockFindUnique.mockReset();
+    mockSurveyFindUnique.mockReset();
   });
 
   test("active なアンケートを取得する", async () => {
     const questions = [{ type: "text", id: "q1", label: "ご意見" }];
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: "テスト説明",
@@ -44,12 +52,12 @@ describe("GET /survey/:id", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       dataEntries: [],
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("survey-1");
     expect(body.title).toBe("テストアンケート");
     expect(body.description).toBe("テスト説明");
@@ -60,17 +68,17 @@ describe("GET /survey/:id", () => {
   });
 
   test("存在しないアンケートで 404 を返す", async () => {
-    mockFindUnique.mockResolvedValue(null);
+    mockSurveyFindUnique.mockResolvedValue(null);
 
     const app = createApp();
     const res = await app.request("/survey/nonexistent");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
   test("draft のアンケートで 404 を返す", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -83,12 +91,12 @@ describe("GET /survey/:id", () => {
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
   test("completed のアンケートで 404 を返す", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -101,7 +109,7 @@ describe("GET /survey/:id", () => {
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -115,7 +123,7 @@ describe("GET /survey/:id", () => {
         allowOther: true,
       },
     ];
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -124,18 +132,18 @@ describe("GET /survey/:id", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       dataEntries: [],
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.questions[0].allowOther).toBe(true);
   });
 
   test("params 定義を含むアンケートを返す", async () => {
     const params = [{ key: "version", label: "バージョン", visible: true }];
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -145,26 +153,26 @@ describe("GET /survey/:id", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       dataEntries: [],
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.params).toEqual(params);
   });
 });
 
 describe("POST /survey/:id/submit", () => {
   beforeEach(() => {
-    mockFindUnique.mockReset();
-    mockCreateResponse.mockReset();
+    mockSurveyFindUnique.mockReset();
+    mockResponseCreate.mockReset();
     mockSendEmail.mockReset();
     mockSendEmail.mockResolvedValue(undefined);
   });
 
   test("active なアンケートに回答を送信する", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -173,7 +181,7 @@ describe("POST /survey/:id/submit", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockCreateResponse.mockResolvedValue({
+    mockResponseCreate.mockResolvedValue({
       id: "resp-1",
       surveyId: "survey-1",
       answers: { q1: "良いです" },
@@ -188,13 +196,13 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.success).toBe(true);
     expect(body.surveyId).toBe("survey-1");
   });
 
   test("存在しないアンケートへの送信で 404 を返す", async () => {
-    mockFindUnique.mockResolvedValue(null);
+    mockSurveyFindUnique.mockResolvedValue(null);
 
     const app = createApp();
     const res = await app.request("/survey/nonexistent/submit", {
@@ -204,12 +212,12 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
   test("draft のアンケートへの送信で 404 を返す", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -227,12 +235,12 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
   test("completed のアンケートへの送信で 404 を返す", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -250,12 +258,12 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
   test("sendCopy なし（後方互換）で sendResponseCopyEmail を呼ばない", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -264,7 +272,7 @@ describe("POST /survey/:id/submit", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockCreateResponse.mockResolvedValue({
+    mockResponseCreate.mockResolvedValue({
       id: "resp-1",
       surveyId: "survey-1",
       answers: { q1: "良い" },
@@ -283,7 +291,7 @@ describe("POST /survey/:id/submit", () => {
   });
 
   test("sendCopy: false で sendResponseCopyEmail を呼ばない", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -292,7 +300,7 @@ describe("POST /survey/:id/submit", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockCreateResponse.mockResolvedValue({
+    mockResponseCreate.mockResolvedValue({
       id: "resp-1",
       surveyId: "survey-1",
       answers: { q1: "良い" },
@@ -314,7 +322,7 @@ describe("POST /survey/:id/submit", () => {
   });
 
   test("sendCopy: true + メールなしで 400 を返す", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -335,13 +343,13 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBeDefined();
   });
 
   test("sendCopy: true + メールありで 200 + sendResponseCopyEmail 呼び出し", async () => {
     const questions = [{ type: "text", id: "q1", label: "ご意見" }];
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -350,7 +358,7 @@ describe("POST /survey/:id/submit", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockCreateResponse.mockResolvedValue({
+    mockResponseCreate.mockResolvedValue({
       id: "resp-1",
       surveyId: "survey-1",
       answers: { q1: "良い" },
@@ -375,11 +383,12 @@ describe("POST /survey/:id/submit", () => {
       surveyTitle: "テストアンケート",
       questions: [{ type: "text", id: "q1", label: "ご意見", required: false }],
       answers: { q1: "良い" },
+      resendApiKey: "test-resend-key",
     });
   });
 
   test("params 付きで回答を送信する", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -389,7 +398,7 @@ describe("POST /survey/:id/submit", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockCreateResponse.mockResolvedValue({
+    mockResponseCreate.mockResolvedValue({
       id: "resp-1",
       surveyId: "survey-1",
       answers: { q1: "良いです" },
@@ -408,7 +417,7 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(mockCreateResponse).toHaveBeenCalledWith({
+    expect(mockResponseCreate).toHaveBeenCalledWith({
       data: {
         surveyId: "survey-1",
         answers: { q1: "良いです" },
@@ -418,7 +427,7 @@ describe("POST /survey/:id/submit", () => {
   });
 
   test("メール送信失敗でもレスポンスは 200", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -427,7 +436,7 @@ describe("POST /survey/:id/submit", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockCreateResponse.mockResolvedValue({
+    mockResponseCreate.mockResolvedValue({
       id: "resp-1",
       surveyId: "survey-1",
       answers: { q1: "良い" },
@@ -447,18 +456,18 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.success).toBe(true);
   });
 });
 
 describe("GET /survey/:id with dataEntries", () => {
   beforeEach(() => {
-    mockFindUnique.mockReset();
+    mockSurveyFindUnique.mockReset();
   });
 
   test("dataEntries を含むアンケートを返す", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -474,12 +483,12 @@ describe("GET /survey/:id with dataEntries", () => {
           label: "ラベルA",
         },
       ],
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.dataEntries).toHaveLength(1);
     expect(body.dataEntries[0].id).toBe("entry-1");
     expect(body.dataEntries[0].values).toEqual({ event: "Event A" });
@@ -489,15 +498,15 @@ describe("GET /survey/:id with dataEntries", () => {
 
 describe("POST /survey/:id/submit with dataEntryId", () => {
   beforeEach(() => {
-    mockFindUnique.mockReset();
-    mockCreateResponse.mockReset();
+    mockSurveyFindUnique.mockReset();
+    mockResponseCreate.mockReset();
     mockEntryFindUnique.mockReset();
     mockSendEmail.mockReset();
     mockSendEmail.mockResolvedValue(undefined);
   });
 
   test("dataEntryId 付きで回答を送信し、values を params にマージ", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -515,7 +524,7 @@ describe("POST /survey/:id/submit with dataEntryId", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockCreateResponse.mockResolvedValue({
+    mockResponseCreate.mockResolvedValue({
       id: "resp-1",
       surveyId: "survey-1",
       answers: { q1: "良いです" },
@@ -535,7 +544,7 @@ describe("POST /survey/:id/submit with dataEntryId", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(mockCreateResponse).toHaveBeenCalledWith({
+    expect(mockResponseCreate).toHaveBeenCalledWith({
       data: {
         surveyId: "survey-1",
         answers: { q1: "良いです" },
@@ -546,7 +555,7 @@ describe("POST /survey/:id/submit with dataEntryId", () => {
   });
 
   test("無効な dataEntryId で 404 を返す", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -568,21 +577,21 @@ describe("POST /survey/:id/submit with dataEntryId", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Data entry not found");
   });
 });
 
 describe("POST /survey/:id/submit required validation", () => {
   beforeEach(() => {
-    mockFindUnique.mockReset();
-    mockCreateResponse.mockReset();
+    mockSurveyFindUnique.mockReset();
+    mockResponseCreate.mockReset();
     mockSendEmail.mockReset();
     mockSendEmail.mockResolvedValue(undefined);
   });
 
   test("required: true の text 質問に空回答で 400 を返す", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -600,12 +609,12 @@ describe("POST /survey/:id/submit required validation", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toContain("q1");
   });
 
   test("required: true の radio 質問に空回答で 400 を返す", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -631,12 +640,12 @@ describe("POST /survey/:id/submit required validation", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toContain("q1");
   });
 
   test("required: true の checkbox 質問に空配列で 400 を返す", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -662,12 +671,12 @@ describe("POST /survey/:id/submit required validation", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toContain("q1");
   });
 
   test("required: false の質問に空回答でも正常に保存する", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -676,7 +685,7 @@ describe("POST /survey/:id/submit required validation", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockCreateResponse.mockResolvedValue({
+    mockResponseCreate.mockResolvedValue({
       id: "resp-1",
       surveyId: "survey-1",
       answers: { q1: "" },
@@ -691,11 +700,11 @@ describe("POST /survey/:id/submit required validation", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(mockCreateResponse).toHaveBeenCalled();
+    expect(mockResponseCreate).toHaveBeenCalled();
   });
 
   test("すべての必須質問に回答済みなら正常に保存する", async () => {
-    mockFindUnique.mockResolvedValue({
+    mockSurveyFindUnique.mockResolvedValue({
       id: "survey-1",
       title: "テストアンケート",
       description: null,
@@ -707,7 +716,7 @@ describe("POST /survey/:id/submit required validation", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    mockCreateResponse.mockResolvedValue({
+    mockResponseCreate.mockResolvedValue({
       id: "resp-1",
       surveyId: "survey-1",
       answers: { q1: "太郎", q2: "" },
@@ -722,6 +731,6 @@ describe("POST /survey/:id/submit required validation", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(mockCreateResponse).toHaveBeenCalled();
+    expect(mockResponseCreate).toHaveBeenCalled();
   });
 });

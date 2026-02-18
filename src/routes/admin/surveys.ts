@@ -1,7 +1,14 @@
 import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
-import { minLength, object, pipe, safeParse, string } from "valibot";
+import type { HonoEnv } from "../../index.js";
 import {
+  buildAdminSurveyResponse,
+  buildDataEntryResponse,
+  parseQuestions,
+  validateDataEntryKeys,
+} from "../../lib/survey.js";
+import {
+  EntryIdParamSchema,
   ErrorResponseSchema,
   IdParamSchema,
 } from "../../schema/common.js";
@@ -11,28 +18,14 @@ import {
   CreateSurveySchema,
   DataEntryListResponseSchema,
   DataEntryResponseSchema,
-  QuestionsSchema,
   SurveyListResponseSchema,
-  type SurveyParam,
-  SurveyParamsSchema,
   SurveyResponsesSchema,
   UpdateDataEntrySchema,
   UpdateSurveySchema,
   UpdateSurveyStatusSchema,
 } from "../../schema/survey.js";
-import { prisma } from "../../lib/db.js";
 
-const EntryIdParamSchema = object({
-  id: pipe(string(), minLength(1)),
-  entryId: pipe(string(), minLength(1)),
-});
-
-function parseSurveyParams(raw: unknown): SurveyParam[] {
-  const result = safeParse(SurveyParamsSchema, raw);
-  return result.success ? result.output : [];
-}
-
-const app = new Hono();
+const app = new Hono<HonoEnv>();
 
 app.get(
   "/",
@@ -51,6 +44,7 @@ app.get(
     },
   }),
   async (c) => {
+    const prisma = c.get("prisma");
     const surveys = await prisma.survey.findMany({
       select: { id: true, title: true, status: true, createdAt: true },
       orderBy: { createdAt: "desc" },
@@ -82,23 +76,12 @@ app.post(
   }),
   validator("json", CreateSurveySchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { title, description, questions, params } = c.req.valid("json");
     const survey = await prisma.survey.create({
       data: { title, description, questions, ...(params && { params }) },
     });
-    const parsed = safeParse(QuestionsSchema, survey.questions);
-    return c.json(
-      {
-        id: survey.id,
-        title: survey.title,
-        description: survey.description,
-        status: survey.status,
-        createdAt: survey.createdAt.toISOString(),
-        questions: parsed.success ? parsed.output : [],
-        params: parseSurveyParams(survey.params),
-      },
-      201
-    );
+    return c.json(buildAdminSurveyResponse(survey), 201);
   }
 );
 
@@ -128,6 +111,7 @@ app.get(
   }),
   validator("param", IdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const survey = await prisma.survey.findUnique({
       where: { id },
@@ -141,23 +125,11 @@ app.get(
     if (!survey) {
       return c.json({ error: "Survey not found" }, 404);
     }
-    const parsed = safeParse(QuestionsSchema, survey.questions);
     return c.json({
-      id: survey.id,
-      title: survey.title,
-      description: survey.description,
-      status: survey.status,
-      createdAt: survey.createdAt.toISOString(),
-      questions: parsed.success ? parsed.output : [],
-      params: parseSurveyParams(survey.params),
-      dataEntries: survey.dataEntries.map((e) => ({
-        id: e.id,
-        surveyId: e.surveyId,
-        values: e.values as Record<string, string>,
-        label: e.label,
-        responseCount: e._count.responses,
-        createdAt: e.createdAt.toISOString(),
-      })),
+      ...buildAdminSurveyResponse(survey),
+      dataEntries: survey.dataEntries.map((e) =>
+        buildDataEntryResponse(e, e._count.responses)
+      ),
     });
   }
 );
@@ -197,6 +169,7 @@ app.put(
   validator("param", IdParamSchema),
   validator("json", UpdateSurveySchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const { title, description, questions, params } = c.req.valid("json");
     const existing = await prisma.survey.findUnique({ where: { id } });
@@ -204,10 +177,7 @@ app.put(
       return c.json({ error: "Survey not found" }, 404);
     }
     if (existing.status !== "draft") {
-      const parsedExisting = safeParse(QuestionsSchema, existing.questions);
-      const existingJson = JSON.stringify(
-        parsedExisting.success ? parsedExisting.output : existing.questions
-      );
+      const existingJson = JSON.stringify(parseQuestions(existing.questions));
       const newJson = JSON.stringify(questions);
       if (existingJson !== newJson) {
         return c.json(
@@ -220,16 +190,7 @@ app.put(
       where: { id },
       data: { title, description, questions, ...(params && { params }) },
     });
-    const parsed = safeParse(QuestionsSchema, survey.questions);
-    return c.json({
-      id: survey.id,
-      title: survey.title,
-      description: survey.description,
-      status: survey.status,
-      createdAt: survey.createdAt.toISOString(),
-      questions: parsed.success ? parsed.output : [],
-      params: parseSurveyParams(survey.params),
-    });
+    return c.json(buildAdminSurveyResponse(survey));
   }
 );
 
@@ -260,6 +221,7 @@ app.patch(
   validator("param", IdParamSchema),
   validator("json", UpdateSurveyStatusSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const { status } = c.req.valid("json");
     const existing = await prisma.survey.findUnique({ where: { id } });
@@ -270,16 +232,7 @@ app.patch(
       where: { id },
       data: { status },
     });
-    const parsed = safeParse(QuestionsSchema, survey.questions);
-    return c.json({
-      id: survey.id,
-      title: survey.title,
-      description: survey.description,
-      status: survey.status,
-      createdAt: survey.createdAt.toISOString(),
-      questions: parsed.success ? parsed.output : [],
-      params: parseSurveyParams(survey.params),
-    });
+    return c.json(buildAdminSurveyResponse(survey));
   }
 );
 
@@ -312,6 +265,7 @@ app.delete(
   }),
   validator("param", IdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const survey = await prisma.survey.findUnique({ where: { id } });
     if (!survey) {
@@ -351,6 +305,7 @@ app.get(
   }),
   validator("param", IdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const survey = await prisma.survey.findUnique({
       where: { id },
@@ -408,6 +363,7 @@ app.get(
   }),
   validator("param", IdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const survey = await prisma.survey.findUnique({ where: { id } });
     if (!survey) {
@@ -419,14 +375,9 @@ app.get(
       orderBy: { createdAt: "asc" },
     });
     return c.json({
-      dataEntries: entries.map((e) => ({
-        id: e.id,
-        surveyId: e.surveyId,
-        values: e.values as Record<string, string>,
-        label: e.label,
-        responseCount: e._count.responses,
-        createdAt: e.createdAt.toISOString(),
-      })),
+      dataEntries: entries.map((e) =>
+        buildDataEntryResponse(e, e._count.responses)
+      ),
     });
   }
 );
@@ -466,6 +417,7 @@ app.post(
   validator("param", IdParamSchema),
   validator("json", CreateDataEntrySchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const { values, label } = c.req.valid("json");
 
@@ -474,33 +426,16 @@ app.post(
       return c.json({ error: "Survey not found" }, 404);
     }
 
-    const params = parseSurveyParams(survey.params);
-    const paramKeys = new Set(params.map((p) => p.key));
-    const invalidKeys = Object.keys(values).filter((k) => !paramKeys.has(k));
-    if (invalidKeys.length > 0) {
-      return c.json(
-        {
-          error: `Invalid keys: ${invalidKeys.join(", ")}. Allowed keys: ${[...paramKeys].join(", ")}`,
-        },
-        400
-      );
+    const error = validateDataEntryKeys(values, survey.params);
+    if (error) {
+      return c.json({ error }, 400);
     }
 
     const entry = await prisma.surveyDataEntry.create({
       data: { surveyId: id, values, ...(label != null && { label }) },
     });
 
-    return c.json(
-      {
-        id: entry.id,
-        surveyId: entry.surveyId,
-        values: entry.values as Record<string, string>,
-        label: entry.label,
-        responseCount: 0,
-        createdAt: entry.createdAt.toISOString(),
-      },
-      201
-    );
+    return c.json(buildDataEntryResponse(entry, 0), 201);
   }
 );
 
@@ -531,6 +466,7 @@ app.put(
   validator("param", EntryIdParamSchema),
   validator("json", UpdateDataEntrySchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { entryId } = c.req.valid("param");
     const { values, label } = c.req.valid("json");
 
@@ -547,14 +483,7 @@ app.put(
       data: { values, label: label ?? null },
     });
 
-    return c.json({
-      id: entry.id,
-      surveyId: entry.surveyId,
-      values: entry.values as Record<string, string>,
-      label: entry.label,
-      responseCount: 0,
-      createdAt: entry.createdAt.toISOString(),
-    });
+    return c.json(buildDataEntryResponse(entry, 0));
   }
 );
 
@@ -587,6 +516,7 @@ app.delete(
   }),
   validator("param", EntryIdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { entryId } = c.req.valid("param");
 
     const existing = await prisma.surveyDataEntry.findUnique({
