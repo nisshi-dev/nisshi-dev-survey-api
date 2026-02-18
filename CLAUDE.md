@@ -9,7 +9,7 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 |---|---|---|
 | リポジトリ | `nisshi-dev-survey` | `nisshi-dev-survey-api`（本リポ） |
 | ドメイン | survey.nisshi.dev | api.survey.nisshi.dev |
-| Framework | Vite（SPA） | Other（Vite SSR ビルド） |
+| Framework | Vite（SPA） | Other（tsup バンドル） |
 
 ## 開発手法: TDD（テスト駆動開発）
 
@@ -29,7 +29,7 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 ### 開発・ビルド
 
 - `npm run dev` — 開発サーバー起動（`@hono/node-server`、ポート 3000）
-- `npm run build` — Vite SSR ビルド（`api/index.js` 生成）
+- `npm run build` — tsup ビルド（`api/index.js` 生成）
 - `npm run build:vercel` — Prisma Client 生成 + ビルド（Vercel 用）
 
 ### テスト
@@ -64,4 +64,4 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 - **Framework Preset:** Other
 - **Build Command:** `npm run build:vercel`
 - **Output Directory:** `dist`
-- **ビルドフロー:** `prisma generate` → `vite build --ssr`（全依存を `api/index.js` にバンドル）
+- **ビルドフロー:** `prisma generate` → `tsup`（全依存を `api/index.js` にバンドル）
