@@ -5,15 +5,17 @@ import { hashPassword } from "../src/lib/password.js";
 const email = process.env.ADMIN_EMAIL;
 const password = process.env.ADMIN_PASSWORD;
 
-if (!(email && password)) {
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!(email && password && databaseUrl)) {
   console.error(
-    "ADMIN_EMAIL and ADMIN_PASSWORD environment variables are required"
+    "ADMIN_EMAIL, ADMIN_PASSWORD, DATABASE_URL environment variables are required"
   );
   process.exit(1);
 }
 
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: databaseUrl,
 });
 const prisma = new PrismaClient({ adapter });
 

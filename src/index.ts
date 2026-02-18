@@ -12,13 +12,13 @@ import adminSurveys from "./routes/admin/surveys.js";
 import dataSurveys from "./routes/data/surveys.js";
 import survey from "./routes/survey.js";
 
-type Bindings = {
-  DATABASE_URL: string;
+interface Bindings {
   ALLOWED_ORIGIN: string;
+  DATABASE_URL: string;
+  NISSHI_DEV_SURVEY_API_KEY: string;
   RESEND_API_KEY: string;
   RESEND_FROM_EMAIL: string;
-  NISSHI_DEV_SURVEY_API_KEY: string;
-};
+}
 
 export interface HonoEnv {
   Bindings: Bindings;
