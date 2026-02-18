@@ -64,7 +64,7 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 ## 環境変数
 
 - `DATABASE_URL` — PostgreSQL 接続 URL
-- `ALLOWED_ORIGIN` — CORS 許可オリジン（本番: `https://survey.nisshi.dev`）
+- `ALLOWED_ORIGINS` — CORS 許可オリジン（カンマ区切り、ワイルドカード `*` 対応。例: `https://survey.nisshi.dev,https://nisshi-dev-survey-*.vercel.app`）
 - `RESEND_API_KEY` — Resend API キー（回答コピーメール送信に使用）
 - `RESEND_FROM_EMAIL` — 送信元メールアドレス
 - `NISSHI_DEV_SURVEY_API_KEY` — データ投入 API の認証キー
@@ -74,7 +74,8 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 ## Cloudflare Workers デプロイ
 
 - `npm run deploy` — `wrangler deploy --minify` でデプロイ
-- シークレットは `wrangler secret put <NAME>` で設定（`DATABASE_URL`, `ALLOWED_ORIGIN`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `NISSHI_DEV_SURVEY_API_KEY`）
+- シークレットは `wrangler secret put <NAME>` で設定（`DATABASE_URL`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `NISSHI_DEV_SURVEY_API_KEY`）
+- `ALLOWED_ORIGINS` と `RESEND_FROM_EMAIL` は `wrangler.jsonc` の `vars` で管理
 - `nodejs_compat` フラグにより `node:crypto`, `node:net` 等の Node.js API を利用可能
 
 ## ドキュメント管理

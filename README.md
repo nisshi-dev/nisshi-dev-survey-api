@@ -57,7 +57,7 @@ wrangler secret put NISSHI_DEV_SURVEY_API_KEY
 npm run deploy
 ```
 
-`ALLOWED_ORIGIN` と `RESEND_FROM_EMAIL` は `wrangler.jsonc` の `vars` で管理。
+`ALLOWED_ORIGINS` と `RESEND_FROM_EMAIL` は `wrangler.jsonc` の `vars` で管理。
 
 ## 環境変数
 
@@ -66,7 +66,7 @@ npm run deploy
 | `DATABASE_URL` | PostgreSQL 接続 URL | secret |
 | `RESEND_API_KEY` | Resend API キー | secret |
 | `NISSHI_DEV_SURVEY_API_KEY` | データ投入 API の認証キー | secret |
-| `ALLOWED_ORIGIN` | CORS 許可オリジン | `wrangler.jsonc` vars |
+| `ALLOWED_ORIGINS` | CORS 許可オリジン（カンマ区切り、`*` ワイルドカード対応） | `wrangler.jsonc` vars |
 | `RESEND_FROM_EMAIL` | メール送信元アドレス | `wrangler.jsonc` vars |
 | `ADMIN_EMAIL` | 管理者メールアドレス（seed 用） | `.dev.vars` |
 | `ADMIN_PASSWORD` | 管理者パスワード（seed 用） | `.dev.vars` |
