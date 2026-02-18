@@ -4,8 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "tsx watch --env-file=.env src/server/dev.ts",
-		"build": "tsup && mkdir -p dist",
-		"build:vercel": "prisma generate && npm run build",
+		"build:vercel": "prisma generate",
 		"generate:openapi": "tsx scripts/generate-openapi.ts",
 		"test": "vitest",
 		"test:run": "vitest run",
@@ -37,7 +36,6 @@
 		"@types/pg": "8.16.0",
 		"@types/react": "19.2.14",
 		"prisma": "7.4.0",
-		"tsup": "^8.5.0",
 		"tsx": "4.x",
 		"typescript": "5.x",
 		"vitest": "4.0.18"
