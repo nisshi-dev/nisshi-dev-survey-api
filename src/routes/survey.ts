@@ -176,7 +176,7 @@ app.post(
     });
 
     if (sendCopy && respondentEmail) {
-      sendResponseCopyEmail({
+      const emailPromise = sendResponseCopyEmail({
         to: respondentEmail,
         from: c.env.RESEND_FROM_EMAIL,
         surveyTitle: survey.title,
@@ -186,6 +186,11 @@ app.post(
       }).catch((err) => {
         console.error("Failed to send response copy email:", err);
       });
+      try {
+        c.executionCtx.waitUntil(emailPromise);
+      } catch {
+        // executionCtx is unavailable in dev/test environments
+      }
     }
 
     return c.json({ success: true, surveyId: id });
