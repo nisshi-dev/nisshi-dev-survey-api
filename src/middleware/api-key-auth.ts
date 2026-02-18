@@ -1,8 +1,9 @@
 import crypto from "node:crypto";
 import type { MiddlewareHandler } from "hono";
+import type { HonoEnv } from "../index.js";
 
-export const apiKeyAuth: MiddlewareHandler = async (c, next) => {
-  const expected = process.env.NISSHI_DEV_SURVEY_API_KEY;
+export const apiKeyAuth: MiddlewareHandler<HonoEnv> = async (c, next) => {
+  const expected = c.env.NISSHI_DEV_SURVEY_API_KEY;
   if (!expected) {
     return c.json({ error: "API key not configured" }, 500);
   }

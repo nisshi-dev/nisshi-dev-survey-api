@@ -3,17 +3,17 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
+		"postinstall": "prisma generate",
 		"dev": "wrangler dev",
 		"deploy": "wrangler deploy --minify",
-		"generate:openapi": "node scripts/generate-openapi.ts",
+		"generate:openapi": "tsx scripts/generate-openapi.ts",
 		"test": "vitest",
 		"test:run": "vitest run",
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev",
 		"db:migrate:deploy": "prisma migrate deploy",
 		"db:studio": "prisma studio",
-		"db:seed": "prisma db seed",
-		"postinstall": "prisma generate"
+		"db:seed": "prisma db seed"
 	},
 	"dependencies": {
 		"@hono/standard-validator": "0.2.2",

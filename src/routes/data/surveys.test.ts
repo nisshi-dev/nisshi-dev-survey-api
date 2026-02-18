@@ -1,34 +1,36 @@
 import { Hono } from "hono";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { HonoEnv } from "../../index";
 import surveysApp from "./surveys";
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    survey: {
-      findMany: vi.fn(),
-      create: vi.fn(),
-      findUnique: vi.fn(),
-    },
-    response: {
-      createMany: vi.fn(),
-    },
-    surveyDataEntry: {
-      findMany: vi.fn(),
-      create: vi.fn(),
-    },
-  },
-}));
+const mockFindMany = vi.fn();
+const mockCreate = vi.fn();
+const mockFindUnique = vi.fn();
+const mockCreateMany = vi.fn();
+const mockEntryFindMany = vi.fn();
+const mockEntryCreate = vi.fn();
 
-const { prisma } = await import("@/lib/db");
-const mockFindMany = vi.mocked(prisma.survey.findMany);
-const mockCreate = vi.mocked(prisma.survey.create);
-const mockFindUnique = vi.mocked(prisma.survey.findUnique);
-const mockCreateMany = vi.mocked(prisma.response.createMany);
-const mockEntryFindMany = vi.mocked(prisma.surveyDataEntry.findMany);
-const mockEntryCreate = vi.mocked(prisma.surveyDataEntry.create);
+const mockPrisma = {
+  survey: {
+    findMany: mockFindMany,
+    create: mockCreate,
+    findUnique: mockFindUnique,
+  },
+  response: {
+    createMany: mockCreateMany,
+  },
+  surveyDataEntry: {
+    findMany: mockEntryFindMany,
+    create: mockEntryCreate,
+  },
+};
 
 function createApp() {
-  const app = new Hono();
+  const app = new Hono<HonoEnv>();
+  app.use("/*", async (c, next) => {
+    c.set("prisma", mockPrisma as never);
+    await next();
+  });
   app.route("/data/surveys", surveysApp);
   return app;
 }
@@ -184,7 +186,7 @@ describe("GET /data/surveys/:id", () => {
           updatedAt: new Date(),
         },
       ],
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/data/surveys/survey-1");
@@ -364,7 +366,7 @@ describe("GET /data/surveys/:id/data-entries", () => {
         createdAt: new Date("2026-02-17T00:00:00.000Z"),
         updatedAt: new Date(),
       },
-    ] as never);
+    ]);
 
     const app = createApp();
     const res = await app.request("/data/surveys/survey-1/data-entries");

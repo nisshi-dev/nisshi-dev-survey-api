@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
 import { minLength, object, pipe, safeParse, string } from "valibot";
+import type { HonoEnv } from "../../index.js";
 import {
   ErrorResponseSchema,
   IdParamSchema,
@@ -20,7 +21,6 @@ import {
   UpdateSurveySchema,
   UpdateSurveyStatusSchema,
 } from "../../schema/survey.js";
-import { prisma } from "../../lib/db.js";
 
 const EntryIdParamSchema = object({
   id: pipe(string(), minLength(1)),
@@ -32,7 +32,7 @@ function parseSurveyParams(raw: unknown): SurveyParam[] {
   return result.success ? result.output : [];
 }
 
-const app = new Hono();
+const app = new Hono<HonoEnv>();
 
 app.get(
   "/",
@@ -51,6 +51,7 @@ app.get(
     },
   }),
   async (c) => {
+    const prisma = c.get("prisma");
     const surveys = await prisma.survey.findMany({
       select: { id: true, title: true, status: true, createdAt: true },
       orderBy: { createdAt: "desc" },
@@ -82,6 +83,7 @@ app.post(
   }),
   validator("json", CreateSurveySchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { title, description, questions, params } = c.req.valid("json");
     const survey = await prisma.survey.create({
       data: { title, description, questions, ...(params && { params }) },
@@ -128,6 +130,7 @@ app.get(
   }),
   validator("param", IdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const survey = await prisma.survey.findUnique({
       where: { id },
@@ -197,6 +200,7 @@ app.put(
   validator("param", IdParamSchema),
   validator("json", UpdateSurveySchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const { title, description, questions, params } = c.req.valid("json");
     const existing = await prisma.survey.findUnique({ where: { id } });
@@ -260,6 +264,7 @@ app.patch(
   validator("param", IdParamSchema),
   validator("json", UpdateSurveyStatusSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const { status } = c.req.valid("json");
     const existing = await prisma.survey.findUnique({ where: { id } });
@@ -312,6 +317,7 @@ app.delete(
   }),
   validator("param", IdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const survey = await prisma.survey.findUnique({ where: { id } });
     if (!survey) {
@@ -351,6 +357,7 @@ app.get(
   }),
   validator("param", IdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const survey = await prisma.survey.findUnique({
       where: { id },
@@ -408,6 +415,7 @@ app.get(
   }),
   validator("param", IdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const survey = await prisma.survey.findUnique({ where: { id } });
     if (!survey) {
@@ -466,6 +474,7 @@ app.post(
   validator("param", IdParamSchema),
   validator("json", CreateDataEntrySchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const { values, label } = c.req.valid("json");
 
@@ -531,6 +540,7 @@ app.put(
   validator("param", EntryIdParamSchema),
   validator("json", UpdateDataEntrySchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { entryId } = c.req.valid("param");
     const { values, label } = c.req.valid("json");
 
@@ -587,6 +597,7 @@ app.delete(
   }),
   validator("param", EntryIdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { entryId } = c.req.valid("param");
 
     const existing = await prisma.surveyDataEntry.findUnique({

@@ -1,29 +1,35 @@
 import { Hono } from "hono";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { HonoEnv } from "../../index";
 import authApp from "./auth";
-
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    adminUser: { findUnique: vi.fn() },
-    session: { create: vi.fn(), delete: vi.fn(), findUnique: vi.fn() },
-  },
-}));
 
 vi.mock("@/lib/password", () => ({
   verifyPassword: vi.fn(),
 }));
 
-const { prisma } = await import("@/lib/db");
 const { verifyPassword } = await import("@/lib/password");
-
-const mockFindUser = vi.mocked(prisma.adminUser.findUnique);
-const mockCreateSession = vi.mocked(prisma.session.create);
-const mockDeleteSession = vi.mocked(prisma.session.delete);
-const mockFindSession = vi.mocked(prisma.session.findUnique);
 const mockVerifyPassword = vi.mocked(verifyPassword);
 
+const mockFindUser = vi.fn();
+const mockCreateSession = vi.fn();
+const mockDeleteSession = vi.fn();
+const mockFindSession = vi.fn();
+
+const mockPrisma = {
+  adminUser: { findUnique: mockFindUser },
+  session: {
+    create: mockCreateSession,
+    delete: mockDeleteSession,
+    findUnique: mockFindSession,
+  },
+};
+
 function createApp() {
-  const app = new Hono();
+  const app = new Hono<HonoEnv>();
+  app.use("/*", async (c, next) => {
+    c.set("prisma", mockPrisma as never);
+    await next();
+  });
   app.route("/admin/auth", authApp);
   return app;
 }
@@ -154,7 +160,7 @@ describe("GET /admin/auth/me", () => {
         id: "user-1",
         email: "admin@example.com",
       },
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/admin/auth/me", {

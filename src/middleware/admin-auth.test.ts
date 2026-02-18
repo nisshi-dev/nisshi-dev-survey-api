@@ -3,20 +3,20 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { HonoEnv } from "../index";
 import { adminAuth } from "./admin-auth";
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    session: {
-      findUnique: vi.fn(),
-    },
-  },
-}));
+const mockFindUnique = vi.fn();
 
-// モック後にインポート
-const { prisma } = await import("@/lib/db");
-const mockFindUnique = vi.mocked(prisma.session.findUnique);
+const mockPrisma = {
+  session: {
+    findUnique: mockFindUnique,
+  },
+};
 
 function createApp() {
   const app = new Hono<HonoEnv>();
+  app.use("/*", async (c, next) => {
+    c.set("prisma", mockPrisma as never);
+    await next();
+  });
   app.use("/*", adminAuth);
   app.get("/test", (c) => {
     const user = c.get("user");
@@ -54,7 +54,7 @@ describe("adminAuth middleware", () => {
       expiresAt: new Date(Date.now() - 1000),
       createdAt: new Date(),
       user: { id: "user-1", email: "admin@example.com" },
-    } as never);
+    });
     const app = createApp();
     const res = await app.request("/test", {
       headers: { Cookie: "session=session-1" },
@@ -69,7 +69,7 @@ describe("adminAuth middleware", () => {
       expiresAt: new Date(Date.now() + 86_400_000),
       createdAt: new Date(),
       user: { id: "user-1", email: "admin@example.com" },
-    } as never);
+    });
     const app = createApp();
     const res = await app.request("/test", {
       headers: { Cookie: "session=session-1" },

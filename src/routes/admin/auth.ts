@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { describeRoute, resolver, validator } from "hono-openapi";
+import type { HonoEnv } from "../../index.js";
 import {
   LoginRequestSchema,
   LoginResponseSchema,
@@ -8,12 +9,11 @@ import {
   MeResponseSchema,
 } from "../../schema/auth.js";
 import { ErrorResponseSchema } from "../../schema/common.js";
-import { prisma } from "../../lib/db.js";
 import { verifyPassword } from "../../lib/password.js";
 
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
-const app = new Hono();
+const app = new Hono<HonoEnv>();
 
 app.post(
   "/login",
@@ -41,6 +41,7 @@ app.post(
   }),
   validator("json", LoginRequestSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { email, password } = c.req.valid("json");
 
     const user = await prisma.adminUser.findUnique({
@@ -62,10 +63,11 @@ app.post(
       },
     });
 
+    const isSecure = new URL(c.req.url).protocol === "https:";
     setCookie(c, "session", session.id, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+      secure: isSecure,
+      sameSite: isSecure ? "None" : "Lax",
       path: "/",
       maxAge: SESSION_MAX_AGE,
     });
@@ -91,6 +93,7 @@ app.post(
     },
   }),
   async (c) => {
+    const prisma = c.get("prisma");
     const sessionId = getCookie(c, "session");
     if (sessionId) {
       try {
@@ -129,6 +132,7 @@ app.get(
     },
   }),
   async (c) => {
+    const prisma = c.get("prisma");
     const sessionId = getCookie(c, "session");
     if (!sessionId) {
       return c.json({ error: "Unauthorized" }, 401);

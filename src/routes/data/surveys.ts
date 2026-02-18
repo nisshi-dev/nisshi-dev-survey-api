@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
 import { safeParse } from "valibot";
+import type { HonoEnv } from "../../index.js";
 import {
   ErrorResponseSchema,
   IdParamSchema,
@@ -17,14 +18,13 @@ import {
   type SurveyParam,
   SurveyParamsSchema,
 } from "../../schema/survey.js";
-import { prisma } from "../../lib/db.js";
 
 function parseSurveyParams(raw: unknown): SurveyParam[] {
   const result = safeParse(SurveyParamsSchema, raw);
   return result.success ? result.output : [];
 }
 
-const app = new Hono();
+const app = new Hono<HonoEnv>();
 
 app.post(
   "/",
@@ -44,6 +44,7 @@ app.post(
   }),
   validator("json", DataCreateSurveySchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { title, description, questions, params, status } =
       c.req.valid("json");
     const survey = await prisma.survey.create({
@@ -88,6 +89,7 @@ app.get(
     },
   }),
   async (c) => {
+    const prisma = c.get("prisma");
     const surveys = await prisma.survey.findMany({
       select: { id: true, title: true, status: true, createdAt: true },
       orderBy: { createdAt: "desc" },
@@ -127,6 +129,7 @@ app.get(
   }),
   validator("param", IdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const survey = await prisma.survey.findUnique({
       where: { id },
@@ -191,6 +194,7 @@ app.post(
   validator("param", IdParamSchema),
   validator("json", DataSubmitResponsesSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const { responses } = c.req.valid("json");
 
@@ -243,6 +247,7 @@ app.get(
   }),
   validator("param", IdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const survey = await prisma.survey.findUnique({ where: { id } });
     if (!survey) {
@@ -301,6 +306,7 @@ app.post(
   validator("param", IdParamSchema),
   validator("json", CreateDataEntrySchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const { values, label } = c.req.valid("json");
 

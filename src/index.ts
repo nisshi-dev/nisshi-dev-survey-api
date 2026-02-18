@@ -3,6 +3,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { openAPIRouteHandler } from "hono-openapi";
+import type { PrismaClient } from "./generated/prisma/client.js";
+import withPrisma from "./lib/prisma.js";
 import { adminAuth } from "./middleware/admin-auth.js";
 import { apiKeyAuth } from "./middleware/api-key-auth.js";
 import adminAuthRoutes from "./routes/admin/auth.js";
@@ -21,29 +23,21 @@ type Bindings = {
 export interface HonoEnv {
 	Bindings: Bindings;
 	Variables: {
+		prisma: PrismaClient;
 		user: { id: string; email: string };
 	};
 }
 
 const app = new Hono<HonoEnv>();
 
-// env ブリッジ: c.env を process.env にコピー（Workers 互換）
-app.use("*", async (c, next) => {
-	for (const [key, value] of Object.entries(c.env)) {
-		if (typeof value === "string") {
-			process.env[key] = value;
-		}
-	}
-	await next();
-});
-
+app.use("*", withPrisma);
 app.use("*", logger());
 
 app.use(
 	"*",
 	cors({
-		origin: (origin) => {
-			const allowed = process.env.ALLOWED_ORIGIN;
+		origin: (origin, c) => {
+			const allowed = c.env.ALLOWED_ORIGIN;
 			if (!allowed) return origin;
 			return origin === allowed ? origin : null;
 		},

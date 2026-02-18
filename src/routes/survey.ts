@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
 import { safeParse } from "valibot";
+import type { HonoEnv } from "../index.js";
 import {
   ErrorResponseSchema,
   IdParamSchema,
@@ -14,7 +15,6 @@ import {
   SurveyParamsSchema,
   SurveyResponseSchema,
 } from "../schema/survey.js";
-import { prisma } from "../lib/db.js";
 import { sendResponseCopyEmail } from "../lib/email.js";
 
 function parseSurveyParams(raw: unknown): SurveyParam[] {
@@ -43,7 +43,7 @@ function findMissingRequiredAnswers(
   return missingIds;
 }
 
-const app = new Hono();
+const app = new Hono<HonoEnv>();
 
 app.get(
   "/:id",
@@ -71,6 +71,7 @@ app.get(
   }),
   validator("param", IdParamSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const survey = await prisma.survey.findUnique({
       where: { id },
@@ -91,7 +92,7 @@ app.get(
       description: survey.description,
       questions: parsed.success ? parsed.output : [],
       params: parseSurveyParams(survey.params),
-      dataEntries: survey.dataEntries.map((e) => ({
+      dataEntries: survey.dataEntries.map((e: { id: string; values: unknown; label: string | null }) => ({
         id: e.id,
         values: e.values as Record<string, string>,
         label: e.label,
@@ -135,6 +136,7 @@ app.post(
   validator("param", IdParamSchema),
   validator("json", SubmitAnswersSchema),
   async (c) => {
+    const prisma = c.get("prisma");
     const { id } = c.req.valid("param");
     const { answers, params, dataEntryId, sendCopy, respondentEmail } =
       c.req.valid("json");
@@ -196,6 +198,7 @@ app.post(
         surveyTitle: survey.title,
         questions,
         answers,
+        resendApiKey: c.env.RESEND_API_KEY,
       }).catch((err) => {
         console.error("Failed to send response copy email:", err);
       });

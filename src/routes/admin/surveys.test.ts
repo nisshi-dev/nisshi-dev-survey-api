@@ -1,41 +1,43 @@
 import { Hono } from "hono";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { HonoEnv } from "../../index";
 import surveysApp from "./surveys";
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    survey: {
-      findMany: vi.fn(),
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    surveyDataEntry: {
-      findMany: vi.fn(),
-      create: vi.fn(),
-      findUnique: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
+const mockFindMany = vi.fn();
+const mockCreate = vi.fn();
+const mockFindUnique = vi.fn();
+const mockUpdate = vi.fn();
+const mockDelete = vi.fn();
+
+const mockEntryFindMany = vi.fn();
+const mockEntryCreate = vi.fn();
+const mockEntryFindUnique = vi.fn();
+const mockEntryUpdate = vi.fn();
+const mockEntryDelete = vi.fn();
+
+const mockPrisma = {
+  survey: {
+    findMany: mockFindMany,
+    create: mockCreate,
+    findUnique: mockFindUnique,
+    update: mockUpdate,
+    delete: mockDelete,
   },
-}));
-
-const { prisma } = await import("@/lib/db");
-const mockFindMany = vi.mocked(prisma.survey.findMany);
-const mockCreate = vi.mocked(prisma.survey.create);
-const mockFindUnique = vi.mocked(prisma.survey.findUnique);
-const mockUpdate = vi.mocked(prisma.survey.update);
-const mockDelete = vi.mocked(prisma.survey.delete);
-
-const mockEntryFindMany = vi.mocked(prisma.surveyDataEntry.findMany);
-const mockEntryCreate = vi.mocked(prisma.surveyDataEntry.create);
-const mockEntryFindUnique = vi.mocked(prisma.surveyDataEntry.findUnique);
-const mockEntryUpdate = vi.mocked(prisma.surveyDataEntry.update);
-const mockEntryDelete = vi.mocked(prisma.surveyDataEntry.delete);
+  surveyDataEntry: {
+    findMany: mockEntryFindMany,
+    create: mockEntryCreate,
+    findUnique: mockEntryFindUnique,
+    update: mockEntryUpdate,
+    delete: mockEntryDelete,
+  },
+};
 
 function createApp() {
-  const app = new Hono();
+  const app = new Hono<HonoEnv>();
+  app.use("/*", async (c, next) => {
+    c.set("prisma", mockPrisma as never);
+    await next();
+  });
   app.route("/admin/surveys", surveysApp);
   return app;
 }
@@ -156,7 +158,7 @@ describe("GET /admin/surveys/:id", () => {
       createdAt,
       updatedAt: new Date(),
       dataEntries: [],
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1");
@@ -546,7 +548,7 @@ describe("GET /admin/surveys/:id/responses", () => {
           createdAt: new Date(),
         },
       ],
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1/responses");
@@ -585,7 +587,7 @@ describe("GET /admin/surveys/:id/responses", () => {
           createdAt: new Date(),
         },
       ],
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1/responses");
@@ -623,7 +625,7 @@ describe("GET /admin/surveys/:id/responses", () => {
           createdAt: new Date(),
         },
       ],
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1/responses");
@@ -683,7 +685,7 @@ describe("GET /admin/surveys/:id with params", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       dataEntries: [],
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1");
@@ -789,7 +791,7 @@ describe("GET /admin/surveys/:id/data-entries", () => {
         updatedAt: new Date(),
         _count: { responses: 3 },
       },
-    ] as never);
+    ]);
 
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1/data-entries");
@@ -942,7 +944,7 @@ describe("PUT /admin/surveys/:id/data-entries/:entryId", () => {
       survey: {
         params: [{ key: "event", label: "イベント", visible: true }],
       },
-    } as never);
+    });
     mockEntryUpdate.mockResolvedValue({
       id: "entry-1",
       surveyId: "survey-1",
@@ -1003,7 +1005,7 @@ describe("DELETE /admin/surveys/:id/data-entries/:entryId", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       _count: { responses: 0 },
-    } as never);
+    });
     mockEntryDelete.mockResolvedValue({
       id: "entry-1",
       surveyId: "survey-1",
@@ -1033,7 +1035,7 @@ describe("DELETE /admin/surveys/:id/data-entries/:entryId", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       _count: { responses: 5 },
-    } as never);
+    });
 
     const app = createApp();
     const res = await app.request(
