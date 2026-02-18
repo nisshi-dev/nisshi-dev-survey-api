@@ -30,6 +30,9 @@ export interface HonoEnv {
 
 const app = new Hono<HonoEnv>();
 
+// favicon リクエストを早期に返す（DB 接続を回避）
+app.get("/favicon.ico", (c) => c.notFound());
+
 app.use("*", withPrisma);
 app.use("*", logger());
 
