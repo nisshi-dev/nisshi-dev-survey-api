@@ -13,7 +13,7 @@
 | Production | https://nisshi-dev-survey-api.nisshi.workers.dev |
 | Health Check | https://nisshi-dev-survey-api.nisshi.workers.dev/health |
 | Swagger UI | https://nisshi-dev-survey-api.nisshi.workers.dev/ui |
-| Cloudflare Dashboard | [Workers > nisshi-dev-survey-api](https://dash.cloudflare.com/?to=/:account/workers/services/view/nisshi-dev-survey-api) |
+| Cloudflare Dashboard | [Workers > nisshi-dev-survey-api](https://dash.cloudflare.com/45e74bc4f7c04a2b396544c4b7c72812/workers/services/view/nisshi-dev-survey-api/production) |
 
 ## 技術スタック
 
