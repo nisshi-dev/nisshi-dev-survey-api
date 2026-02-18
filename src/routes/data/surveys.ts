@@ -15,6 +15,7 @@ import {
   DataEntryResponseSchema,
   DataSubmitResponsesSchema,
   SurveyListResponseSchema,
+  UpdateSurveySchema,
 } from "../../schema/survey.js";
 
 const app = new Hono<HonoEnv>();
@@ -50,6 +51,55 @@ app.post(
       },
     });
     return c.json(buildAdminSurveyResponse(survey), 201);
+  }
+);
+
+app.put(
+  "/:id",
+  describeRoute({
+    tags: ["Data"],
+    summary: "アンケート更新（データ投入用）",
+    responses: {
+      200: {
+        description: "更新成功",
+        content: {
+          "application/json": {
+            schema: resolver(AdminSurveyResponseSchema),
+          },
+        },
+      },
+      404: {
+        description: "見つからない",
+        content: {
+          "application/json": {
+            schema: resolver(ErrorResponseSchema),
+          },
+        },
+      },
+    },
+  }),
+  validator("param", IdParamSchema),
+  validator("json", UpdateSurveySchema),
+  async (c) => {
+    const prisma = c.get("prisma");
+    const { id } = c.req.valid("param");
+    const { title, description, questions, params } = c.req.valid("json");
+
+    const existing = await prisma.survey.findUnique({ where: { id } });
+    if (!existing) {
+      return c.json({ error: "Survey not found" }, 404);
+    }
+
+    const survey = await prisma.survey.update({
+      where: { id },
+      data: {
+        title,
+        ...(description !== undefined && { description }),
+        questions,
+        ...(params && { params }),
+      },
+    });
+    return c.json(buildAdminSurveyResponse(survey));
   }
 );
 

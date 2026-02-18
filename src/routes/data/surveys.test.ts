@@ -6,6 +6,7 @@ import surveysApp from "./surveys";
 const mockFindMany = vi.fn();
 const mockCreate = vi.fn();
 const mockFindUnique = vi.fn();
+const mockUpdate = vi.fn();
 const mockCreateMany = vi.fn();
 const mockEntryFindMany = vi.fn();
 const mockEntryCreate = vi.fn();
@@ -15,6 +16,7 @@ const mockPrisma = {
     findMany: mockFindMany,
     create: mockCreate,
     findUnique: mockFindUnique,
+    update: mockUpdate,
   },
   response: {
     createMany: mockCreateMany,
@@ -469,5 +471,154 @@ describe("POST /data/surveys/:id/data-entries", () => {
     expect(res.status).toBe(400);
     const body: any = await res.json();
     expect(body.error).toContain("Invalid keys");
+  });
+});
+
+describe("PUT /data/surveys/:id", () => {
+  beforeEach(() => {
+    mockFindUnique.mockReset();
+    mockUpdate.mockReset();
+  });
+
+  test("title・questions を更新し 200 が返る", async () => {
+    const originalQuestions = [{ type: "text", id: "q1", label: "感想" }];
+    const updatedQuestions = [
+      {
+        type: "text",
+        id: "q1",
+        label: "ご感想をお聞かせください",
+        required: false,
+      },
+    ];
+    const createdAt = new Date("2026-02-17T00:00:00.000Z");
+
+    mockFindUnique.mockResolvedValue({
+      id: "survey-1",
+      title: "テスト",
+      description: null,
+      status: "draft",
+      questions: originalQuestions,
+      params: [],
+      createdAt,
+      updatedAt: new Date(),
+    });
+    mockUpdate.mockResolvedValue({
+      id: "survey-1",
+      title: "更新後のタイトル",
+      description: null,
+      status: "draft",
+      questions: updatedQuestions,
+      params: [],
+      createdAt,
+      updatedAt: new Date(),
+    });
+
+    const app = createApp();
+    const res = await app.request("/data/surveys/survey-1", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "更新後のタイトル",
+        questions: updatedQuestions,
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const body: any = await res.json();
+    expect(body.id).toBe("survey-1");
+    expect(body.title).toBe("更新後のタイトル");
+    expect(body.questions).toEqual(updatedQuestions);
+    expect(body.createdAt).toBe(createdAt.toISOString());
+    expect(mockUpdate).toHaveBeenCalledWith({
+      where: { id: "survey-1" },
+      data: {
+        title: "更新後のタイトル",
+        questions: updatedQuestions,
+      },
+    });
+  });
+
+  test("questions に新しい質問を追加して更新できる", async () => {
+    const originalQuestions = [{ type: "text", id: "q1", label: "感想" }];
+    const updatedQuestions = [
+      { type: "text", id: "q1", label: "感想" },
+      {
+        type: "radio",
+        id: "q2",
+        label: "満足度",
+        options: ["良い", "普通", "悪い"],
+      },
+    ];
+    const createdAt = new Date("2026-02-17T00:00:00.000Z");
+
+    mockFindUnique.mockResolvedValue({
+      id: "survey-1",
+      title: "テスト",
+      description: null,
+      status: "draft",
+      questions: originalQuestions,
+      params: [],
+      createdAt,
+      updatedAt: new Date(),
+    });
+    mockUpdate.mockResolvedValue({
+      id: "survey-1",
+      title: "テスト",
+      description: "説明を追加",
+      status: "draft",
+      questions: updatedQuestions,
+      params: [],
+      createdAt,
+      updatedAt: new Date(),
+    });
+
+    const app = createApp();
+    const res = await app.request("/data/surveys/survey-1", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "テスト",
+        description: "説明を追加",
+        questions: updatedQuestions,
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const body: any = await res.json();
+    expect(body.questions).toHaveLength(2);
+    expect(body.questions[1].type).toBe("radio");
+    expect(body.description).toBe("説明を追加");
+  });
+
+  test("存在しないアンケート ID で 404 を返す", async () => {
+    mockFindUnique.mockResolvedValue(null);
+
+    const app = createApp();
+    const res = await app.request("/data/surveys/nonexistent", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "テスト",
+        questions: [{ type: "text", id: "q1", label: "感想" }],
+      }),
+    });
+
+    expect(res.status).toBe(404);
+    const body: any = await res.json();
+    expect(body.error).toBe("Survey not found");
+  });
+
+  test("title が空の場合バリデーションエラーを返す", async () => {
+    const app = createApp();
+    const res = await app.request("/data/surveys/survey-1", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "",
+        questions: [{ type: "text", id: "q1", label: "感想" }],
+      }),
+    });
+
+    expect(res.status).toBe(400);
   });
 });
