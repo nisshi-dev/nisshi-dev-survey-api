@@ -20,3 +20,11 @@ export const ErrorResponseSchema = object({
 export const MessageResponseSchema = object({
   message: string(),
 });
+
+/**
+ * パスパラメータ: :id + :entryId（データエントリ操作用）
+ */
+export const EntryIdParamSchema = object({
+  id: pipe(string(), minLength(1)),
+  entryId: pipe(string(), minLength(1)),
+});

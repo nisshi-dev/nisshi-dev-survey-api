@@ -1,33 +1,29 @@
 import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
-import { minLength, object, pipe, safeParse, string } from "valibot";
 import type { HonoEnv } from "../../index.js";
-import { ErrorResponseSchema, IdParamSchema } from "../../schema/common.js";
+import {
+  buildAdminSurveyResponse,
+  buildDataEntryResponse,
+  parseQuestions,
+  validateDataEntryKeys,
+} from "../../lib/survey.js";
+import {
+  EntryIdParamSchema,
+  ErrorResponseSchema,
+  IdParamSchema,
+} from "../../schema/common.js";
 import {
   AdminSurveyResponseSchema,
   CreateDataEntrySchema,
   CreateSurveySchema,
   DataEntryListResponseSchema,
   DataEntryResponseSchema,
-  QuestionsSchema,
   SurveyListResponseSchema,
-  type SurveyParam,
-  SurveyParamsSchema,
   SurveyResponsesSchema,
   UpdateDataEntrySchema,
   UpdateSurveySchema,
   UpdateSurveyStatusSchema,
 } from "../../schema/survey.js";
-
-const EntryIdParamSchema = object({
-  id: pipe(string(), minLength(1)),
-  entryId: pipe(string(), minLength(1)),
-});
-
-function parseSurveyParams(raw: unknown): SurveyParam[] {
-  const result = safeParse(SurveyParamsSchema, raw);
-  return result.success ? result.output : [];
-}
 
 const app = new Hono<HonoEnv>();
 
@@ -85,19 +81,7 @@ app.post(
     const survey = await prisma.survey.create({
       data: { title, description, questions, ...(params && { params }) },
     });
-    const parsed = safeParse(QuestionsSchema, survey.questions);
-    return c.json(
-      {
-        id: survey.id,
-        title: survey.title,
-        description: survey.description,
-        status: survey.status,
-        createdAt: survey.createdAt.toISOString(),
-        questions: parsed.success ? parsed.output : [],
-        params: parseSurveyParams(survey.params),
-      },
-      201
-    );
+    return c.json(buildAdminSurveyResponse(survey), 201);
   }
 );
 
@@ -141,23 +125,11 @@ app.get(
     if (!survey) {
       return c.json({ error: "Survey not found" }, 404);
     }
-    const parsed = safeParse(QuestionsSchema, survey.questions);
     return c.json({
-      id: survey.id,
-      title: survey.title,
-      description: survey.description,
-      status: survey.status,
-      createdAt: survey.createdAt.toISOString(),
-      questions: parsed.success ? parsed.output : [],
-      params: parseSurveyParams(survey.params),
-      dataEntries: survey.dataEntries.map((e) => ({
-        id: e.id,
-        surveyId: e.surveyId,
-        values: e.values as Record<string, string>,
-        label: e.label,
-        responseCount: e._count.responses,
-        createdAt: e.createdAt.toISOString(),
-      })),
+      ...buildAdminSurveyResponse(survey),
+      dataEntries: survey.dataEntries.map((e) =>
+        buildDataEntryResponse(e, e._count.responses)
+      ),
     });
   }
 );
@@ -205,10 +177,7 @@ app.put(
       return c.json({ error: "Survey not found" }, 404);
     }
     if (existing.status !== "draft") {
-      const parsedExisting = safeParse(QuestionsSchema, existing.questions);
-      const existingJson = JSON.stringify(
-        parsedExisting.success ? parsedExisting.output : existing.questions
-      );
+      const existingJson = JSON.stringify(parseQuestions(existing.questions));
       const newJson = JSON.stringify(questions);
       if (existingJson !== newJson) {
         return c.json(
@@ -221,16 +190,7 @@ app.put(
       where: { id },
       data: { title, description, questions, ...(params && { params }) },
     });
-    const parsed = safeParse(QuestionsSchema, survey.questions);
-    return c.json({
-      id: survey.id,
-      title: survey.title,
-      description: survey.description,
-      status: survey.status,
-      createdAt: survey.createdAt.toISOString(),
-      questions: parsed.success ? parsed.output : [],
-      params: parseSurveyParams(survey.params),
-    });
+    return c.json(buildAdminSurveyResponse(survey));
   }
 );
 
@@ -272,16 +232,7 @@ app.patch(
       where: { id },
       data: { status },
     });
-    const parsed = safeParse(QuestionsSchema, survey.questions);
-    return c.json({
-      id: survey.id,
-      title: survey.title,
-      description: survey.description,
-      status: survey.status,
-      createdAt: survey.createdAt.toISOString(),
-      questions: parsed.success ? parsed.output : [],
-      params: parseSurveyParams(survey.params),
-    });
+    return c.json(buildAdminSurveyResponse(survey));
   }
 );
 
@@ -424,14 +375,9 @@ app.get(
       orderBy: { createdAt: "asc" },
     });
     return c.json({
-      dataEntries: entries.map((e) => ({
-        id: e.id,
-        surveyId: e.surveyId,
-        values: e.values as Record<string, string>,
-        label: e.label,
-        responseCount: e._count.responses,
-        createdAt: e.createdAt.toISOString(),
-      })),
+      dataEntries: entries.map((e) =>
+        buildDataEntryResponse(e, e._count.responses)
+      ),
     });
   }
 );
@@ -480,33 +426,16 @@ app.post(
       return c.json({ error: "Survey not found" }, 404);
     }
 
-    const params = parseSurveyParams(survey.params);
-    const paramKeys = new Set(params.map((p) => p.key));
-    const invalidKeys = Object.keys(values).filter((k) => !paramKeys.has(k));
-    if (invalidKeys.length > 0) {
-      return c.json(
-        {
-          error: `Invalid keys: ${invalidKeys.join(", ")}. Allowed keys: ${[...paramKeys].join(", ")}`,
-        },
-        400
-      );
+    const error = validateDataEntryKeys(values, survey.params);
+    if (error) {
+      return c.json({ error }, 400);
     }
 
     const entry = await prisma.surveyDataEntry.create({
       data: { surveyId: id, values, ...(label != null && { label }) },
     });
 
-    return c.json(
-      {
-        id: entry.id,
-        surveyId: entry.surveyId,
-        values: entry.values as Record<string, string>,
-        label: entry.label,
-        responseCount: 0,
-        createdAt: entry.createdAt.toISOString(),
-      },
-      201
-    );
+    return c.json(buildDataEntryResponse(entry, 0), 201);
   }
 );
 
@@ -554,14 +483,7 @@ app.put(
       data: { values, label: label ?? null },
     });
 
-    return c.json({
-      id: entry.id,
-      surveyId: entry.surveyId,
-      values: entry.values as Record<string, string>,
-      label: entry.label,
-      responseCount: 0,
-      createdAt: entry.createdAt.toISOString(),
-    });
+    return c.json(buildDataEntryResponse(entry, 0));
   }
 );
 

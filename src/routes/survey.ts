@@ -1,23 +1,15 @@
 import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
-import { safeParse } from "valibot";
 import type { HonoEnv } from "../index.js";
 import { sendResponseCopyEmail } from "../lib/email.js";
+import { parseQuestions, parseSurveyParams } from "../lib/survey.js";
 import { ErrorResponseSchema, IdParamSchema } from "../schema/common.js";
 import {
   type Question,
-  QuestionsSchema,
   SubmitAnswersSchema,
   SubmitSuccessResponseSchema,
-  type SurveyParam,
-  SurveyParamsSchema,
   SurveyResponseSchema,
 } from "../schema/survey.js";
-
-function parseSurveyParams(raw: unknown): SurveyParam[] {
-  const result = safeParse(SurveyParamsSchema, raw);
-  return result.success ? result.output : [];
-}
 
 function findMissingRequiredAnswers(
   questions: Question[],
@@ -82,12 +74,11 @@ app.get(
     if (!survey || survey.status !== "active") {
       return c.json({ error: "Survey not found" }, 404);
     }
-    const parsed = safeParse(QuestionsSchema, survey.questions);
     return c.json({
       id: survey.id,
       title: survey.title,
       description: survey.description,
-      questions: parsed.success ? parsed.output : [],
+      questions: parseQuestions(survey.questions),
       params: parseSurveyParams(survey.params),
       dataEntries: survey.dataEntries.map(
         (e: { id: string; values: unknown; label: string | null }) => ({
@@ -152,20 +143,15 @@ app.post(
       return c.json({ error: "Survey not found" }, 404);
     }
 
-    const parsedQuestions = safeParse(QuestionsSchema, survey.questions);
-    if (parsedQuestions.success) {
-      const missingIds = findMissingRequiredAnswers(
-        parsedQuestions.output,
-        answers
+    const questions = parseQuestions(survey.questions);
+    const missingIds = findMissingRequiredAnswers(questions, answers);
+    if (missingIds.length > 0) {
+      return c.json(
+        {
+          error: `Required questions must be answered: ${missingIds.join(", ")}`,
+        },
+        400
       );
-      if (missingIds.length > 0) {
-        return c.json(
-          {
-            error: `Required questions must be answered: ${missingIds.join(", ")}`,
-          },
-          400
-        );
-      }
     }
 
     let mergedParams = params;
@@ -190,8 +176,6 @@ app.post(
     });
 
     if (sendCopy && respondentEmail) {
-      const parsed = safeParse(QuestionsSchema, survey.questions);
-      const questions: Question[] = parsed.success ? parsed.output : [];
       sendResponseCopyEmail({
         to: respondentEmail,
         surveyTitle: survey.title,
