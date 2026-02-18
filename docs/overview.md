@@ -17,7 +17,7 @@ nisshi-dev Survey は **Google Forms の軽量版** のようなアンケート�
 
 ### 管理者
 
-1. メール + パスワードでログイン
+1. Google アカウントでログイン（事前登録済みメールアドレスのみ）
 2. ダッシュボードでアンケートを作成（パラメータ定義も設定可能）
 3. パラメータ定義がある場合、詳細画面でデータエントリ（値セット）を作成し、エントリ固有の URL を配布
 4. 集まった回答をダッシュボードで閲覧（データエントリ単位でフィルタ・比較可能）
@@ -35,8 +35,11 @@ nisshi-dev Survey は **Google Forms の軽量版** のようなアンケート�
 | Survey | アンケート。タイトル・説明（Markdown、任意）・ステータス（draft/active/completed）・質問定義・パラメータ定義を持つ |
 | SurveyDataEntry | データエントリ。Survey のパラメータ定義に基づく値セット。エントリごとに固有の URL を発行して配布する |
 | Response | 回答。どのアンケート・データエントリに対する回答かを紐付け。パラメータ値も非正規化して保存 |
-| AdminUser | 管理者アカウント。メールアドレスとパスワード |
-| Session | ログインセッション。有効期限付き |
+| User | 管理者アカウント（better-auth 管理）。Google OAuth でログイン |
+| Session | ログインセッション（better-auth 管理）。有効期限付き |
+| Account | OAuth アカウント連携情報（better-auth 管理） |
+| Verification | メール検証トークン（better-auth 管理） |
+| AllowedEmail | ログイン許可メールアドレス。事前登録済みのメールのみ OAuth ログイン可能 |
 
 ### パラメータ
 
@@ -69,7 +72,8 @@ Survey にはパラメータ定義を設定できる。パラメータは URL �
 Survey 1 --> * SurveyDataEntry
 Survey 1 --> * Response
 SurveyDataEntry 1 --> * Response
-AdminUser 1 --> * Session
+User 1 --> * Session
+User 1 --> * Account
 ```
 
 ## 認証方式
@@ -77,4 +81,4 @@ AdminUser 1 --> * Session
 | 対象 | 方式 |
 |---|---|
 | 回答者 | 認証なし。URL を知っていれば誰でも回答可能 |
-| 管理者 | メール + パスワード → セッション Cookie |
+| 管理者 | Google OAuth（better-auth）→ セッション Cookie。`AllowedEmail` に事前登録済みのメールアドレスのみログイン可能 |
