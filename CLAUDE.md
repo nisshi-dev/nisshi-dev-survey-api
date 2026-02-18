@@ -5,11 +5,13 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 
 ## アーキテクチャ
 
+フロントエンドとAPIは別リポジトリ・別 Vercel プロジェクトに分離されている。
+
 | | フロントエンド | API |
 |---|---|---|
 | リポジトリ | `nisshi-dev-survey` | `nisshi-dev-survey-api`（本リポ） |
 | ドメイン | survey.nisshi.dev | api.survey.nisshi.dev |
-| Framework | Vite（SPA） | Other（tsup バンドル） |
+| Framework | Vite（SPA） | Other |
 
 ## 開発手法: TDD（テスト駆動開発）
 
@@ -17,20 +19,20 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 
 ### エージェントへの指示
 
-1. **Red → Green → Refactor のサイクルを厳守する**
+1. **コードを書く前に `/test-driven-development` スキルを呼び出す** — TDD のルールとワークフローがロードされる
+2. **テストの書き方は `/vitest` スキルを参照する** — Vitest 4.x の API・モック・設定の詳細が得られる
+3. **Red → Green → Refactor のサイクルを厳守する**
    - RED: 失敗するテストを書き、`npm run test:run` で失敗を確認
    - GREEN: テストを通す最小限のコードを書き、成功を確認
    - REFACTOR: テストをグリーンに保ちながらコードを整理
-2. **テストなしにプロダクションコードを書かない（例外なし）**
-3. **テストは `npm run test:run` で実行し、結果を確認してから次に進む**
+4. **テストなしにプロダクションコードを書かない（例外なし）**
+5. **テストは `npm run test:run` で実行し、結果を確認してから次に進む**
 
 ## 開発コマンド
 
-### 開発・ビルド
+### 開発
 
 - `npm run dev` — 開発サーバー起動（`@hono/node-server`、ポート 3000）
-- `npm run build` — tsup ビルド（`api/index.js` 生成）
-- `npm run build:vercel` — Prisma Client 生成 + ビルド（Vercel 用）
 
 ### テスト
 
@@ -62,6 +64,11 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 ## Vercel デプロイ
 
 - **Framework Preset:** Other
-- **Build Command:** `npm run build:vercel`
+- **Build Command:** `npm run build:vercel`（`prisma generate`）
 - **Output Directory:** `dist`
-- **ビルドフロー:** `prisma generate` → `tsup`（全依存を `api/index.js` にバンドル）
+
+## ドキュメント管理
+
+- コード変更時に、CLAUDE.md の記述が実態と合っているか確認し、古くなっていれば更新する
+  - 例: API ルート追加 → エンドポイント情報を更新
+  - 例: 開発コマンド変更 → 開発コマンド節を更新
