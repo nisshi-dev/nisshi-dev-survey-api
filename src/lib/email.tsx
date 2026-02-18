@@ -81,6 +81,7 @@ export async function buildResponseEmailHtml(
 
 interface SendResponseCopyEmailParams {
   answers: Record<string, string | string[]>;
+  from: string;
   questions: Question[];
   resendApiKey: string;
   surveyTitle: string;
@@ -89,13 +90,13 @@ interface SendResponseCopyEmailParams {
 
 export async function sendResponseCopyEmail({
   to,
+  from,
   surveyTitle,
   questions,
   answers,
   resendApiKey,
 }: SendResponseCopyEmailParams): Promise<void> {
   const resend = new Resend(resendApiKey);
-  const from = "nisshi-dev <work@nisshi.dev>";
 
   await resend.emails.send({
     from,

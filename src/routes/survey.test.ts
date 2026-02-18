@@ -29,6 +29,7 @@ function createApp() {
     c.env = {
       ...c.env,
       RESEND_API_KEY: "test-resend-key",
+      RESEND_FROM_EMAIL: "test <test@example.com>",
     } as HonoEnv["Bindings"];
     await next();
   });
@@ -380,6 +381,7 @@ describe("POST /survey/:id/submit", () => {
     // Valibot パースにより required: false がデフォルト追加される
     expect(mockSendEmail).toHaveBeenCalledWith({
       to: "test@example.com",
+      from: "test <test@example.com>",
       surveyTitle: "テストアンケート",
       questions: [{ type: "text", id: "q1", label: "ご意見", required: false }],
       answers: { q1: "良い" },
