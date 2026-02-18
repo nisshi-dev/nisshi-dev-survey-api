@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { openAPIRouteHandler } from "hono-openapi";
 import type { PrismaClient } from "./generated/prisma/client.js";
+import { isAllowedOrigin } from "./lib/cors.js";
 import withPrisma from "./lib/prisma.js";
 import { adminAuth } from "./middleware/admin-auth.js";
 import { apiKeyAuth } from "./middleware/api-key-auth.js";
@@ -13,7 +14,7 @@ import dataSurveys from "./routes/data/surveys.js";
 import survey from "./routes/survey.js";
 
 interface Bindings {
-  ALLOWED_ORIGIN: string;
+  ALLOWED_ORIGINS: string;
   DATABASE_URL: string;
   NISSHI_DEV_SURVEY_API_KEY: string;
   RESEND_API_KEY: string;
@@ -29,6 +30,24 @@ export interface HonoEnv {
 }
 
 const app = new Hono<HonoEnv>();
+
+// CORS（全ルートに適用するため最初に配置）
+app.use(
+  "*",
+  cors({
+    origin: (origin, c) => {
+      const allowed = c.env.ALLOWED_ORIGINS;
+      if (!allowed) {
+        return null;
+      }
+      return isAllowedOrigin(origin, allowed) ? origin : null;
+    },
+    credentials: true,
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "X-API-Key"],
+    maxAge: 86_400,
+  })
+);
 
 // favicon リクエストを早期に返す（DB 接続を回避）
 app.get("/favicon.ico", (c) => c.notFound());
@@ -55,20 +74,6 @@ app.get("/ui", swaggerUI({ url: "/doc" }));
 
 app.use("*", withPrisma);
 app.use("*", logger());
-
-app.use(
-  "*",
-  cors({
-    origin: (origin, c) => {
-      const allowed = c.env.ALLOWED_ORIGIN;
-      if (!allowed) {
-        return origin;
-      }
-      return origin === allowed ? origin : null;
-    },
-    credentials: true,
-  })
-);
 
 // 回答者向け API（認証不要）
 app.route("/survey", survey);

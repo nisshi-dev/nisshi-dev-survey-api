@@ -110,7 +110,7 @@ scripts/
 ## 環境変数
 
 - `DATABASE_URL` — PostgreSQL 接続 URL（Prisma Postgres）
-- `ALLOWED_ORIGIN` — CORS 許可オリジン（本番: `https://survey.nisshi.dev`）
+- `ALLOWED_ORIGINS` — CORS 許可オリジン（カンマ区切り、ワイルドカード `*` 対応。例: `https://survey.nisshi.dev,https://nisshi-dev-survey-*.vercel.app`）
 - `RESEND_API_KEY` — Resend API キー（回答コピーメール送信に使用）
 - `RESEND_FROM_EMAIL` — 送信元メールアドレス（未設定時は Resend サンドボックスの `onboarding@resend.dev`）
 - `NISSHI_DEV_SURVEY_API_KEY` — データ投入 API の認証キー（`X-API-Key` ヘッダーで送信）
