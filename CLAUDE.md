@@ -20,7 +20,7 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 | | フロントエンド | API |
 |---|---|---|
 | リポジトリ | `nisshi-dev-survey` | `nisshi-dev-survey-api`（本リポ） |
-| ドメイン | survey.nisshi.dev | api.survey.nisshi.dev |
+| ドメイン | survey.nisshi.dev | nisshi-dev-survey-api.nisshi.workers.dev |
 | デプロイ先 | Vercel | Cloudflare Workers |
 
 ## 開発手法: TDD（テスト駆動開発）
