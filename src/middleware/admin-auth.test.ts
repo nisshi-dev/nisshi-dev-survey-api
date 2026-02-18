@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { HonoEnv } from "../types";
+import type { HonoEnv } from "../index";
 import { adminAuth } from "./admin-auth";
 
 vi.mock("@/lib/db", () => ({

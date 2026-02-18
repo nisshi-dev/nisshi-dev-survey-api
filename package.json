@@ -3,17 +3,16 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"dev": "tsx watch --env-file=.dev.vars src/dev.ts",
-		"dev:worker": "wrangler dev",
-		"deploy": "wrangler deploy",
-		"generate:openapi": "tsx scripts/generate-openapi.ts",
+		"dev": "wrangler dev",
+		"deploy": "wrangler deploy --minify",
+		"generate:openapi": "node scripts/generate-openapi.ts",
 		"test": "vitest",
 		"test:run": "vitest run",
 		"db:generate": "prisma generate",
 		"db:migrate": "prisma migrate dev",
 		"db:migrate:deploy": "prisma migrate deploy",
 		"db:studio": "prisma studio",
-		"db:seed": "tsx --env-file=.dev.vars scripts/seed-admin.ts",
+		"db:seed": "prisma db seed",
 		"postinstall": "prisma generate"
 	},
 	"dependencies": {
@@ -32,12 +31,12 @@
 		"valibot": "1.2.0"
 	},
 	"devDependencies": {
-		"@hono/node-server": "^1.19.9",
+		"@cloudflare/workers-types": "^4.20260218.0",
 		"@types/node": "24.x",
 		"@types/pg": "8.16.0",
 		"@types/react": "19.2.14",
 		"prisma": "7.4.0",
-		"tsx": "4.x",
+		"tsx": "^4.21.0",
 		"typescript": "5.x",
 		"vitest": "4.0.18",
 		"wrangler": "^4.66.0"

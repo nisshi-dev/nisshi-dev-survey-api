@@ -10,7 +10,32 @@ import adminSurveys from "./routes/admin/surveys.js";
 import dataSurveys from "./routes/data/surveys.js";
 import survey from "./routes/survey.js";
 
-const app = new Hono();
+type Bindings = {
+	DATABASE_URL: string;
+	ALLOWED_ORIGIN: string;
+	RESEND_API_KEY: string;
+	RESEND_FROM_EMAIL: string;
+	NISSHI_DEV_SURVEY_API_KEY: string;
+};
+
+export interface HonoEnv {
+	Bindings: Bindings;
+	Variables: {
+		user: { id: string; email: string };
+	};
+}
+
+const app = new Hono<HonoEnv>();
+
+// env ブリッジ: c.env を process.env にコピー（Workers 互換）
+app.use("*", async (c, next) => {
+	for (const [key, value] of Object.entries(c.env)) {
+		if (typeof value === "string") {
+			process.env[key] = value;
+		}
+	}
+	await next();
+});
 
 app.use("*", logger());
 

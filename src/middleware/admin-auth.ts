@@ -1,7 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 import { getCookie } from "hono/cookie";
 import { prisma } from "../lib/db.js";
-import type { HonoEnv } from "../types.js";
+import type { HonoEnv } from "../index.js";
 
 export const adminAuth: MiddlewareHandler<HonoEnv> = async (c, next) => {
   const sessionId = getCookie(c, "session");
