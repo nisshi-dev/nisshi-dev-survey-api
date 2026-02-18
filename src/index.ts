@@ -33,6 +33,26 @@ const app = new Hono<HonoEnv>();
 // favicon リクエストを早期に返す（DB 接続を回避）
 app.get("/favicon.ico", (c) => c.notFound());
 
+app.get("/health", (c) => c.json({ status: "ok" }));
+
+// OpenAPI JSON
+app.get(
+  "/doc",
+  openAPIRouteHandler(app, {
+    documentation: {
+      info: {
+        title: "nisshi-dev Survey API",
+        version: "1.0.0",
+        description: "アンケート作成・回答収集 API",
+      },
+      servers: [{ url: "/" }],
+    },
+  })
+);
+
+// Swagger UI
+app.get("/ui", swaggerUI({ url: "/doc" }));
+
 app.use("*", withPrisma);
 app.use("*", logger());
 
@@ -50,8 +70,6 @@ app.use(
   })
 );
 
-app.get("/health", (c) => c.json({ status: "ok" }));
-
 // 回答者向け API（認証不要）
 app.route("/survey", survey);
 
@@ -63,23 +81,5 @@ app.route("/admin/surveys", adminSurveys);
 // データ投入 API（API Key 認証）
 app.use("/data/*", apiKeyAuth);
 app.route("/data/surveys", dataSurveys);
-
-// OpenAPI JSON
-app.get(
-  "/doc",
-  openAPIRouteHandler(app, {
-    documentation: {
-      info: {
-        title: "nisshi-dev Survey API",
-        version: "1.0.0",
-        description: "アンケート作成・回答収集 API",
-      },
-      servers: [{ url: "/", description: "Local" }],
-    },
-  })
-);
-
-// Swagger UI
-app.get("/ui", swaggerUI({ url: "/doc" }));
 
 export default app;
