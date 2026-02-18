@@ -3,15 +3,25 @@
 nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 フロントエンドリポジトリ: `nisshi-dev-survey`
 
+## docs
+
+| ドキュメント | 内容 |
+|---|---|
+| [docs/overview.md](docs/overview.md) | 要件定義・仕様 |
+| [docs/architecture.md](docs/architecture.md) | アーキテクチャ・技術仕様 |
+| [docs/git-guidelines.md](docs/git-guidelines.md) | Git ガイドライン |
+| [docs/coding-rules.md](docs/coding-rules.md) | コーディングルール |
+| [docs/validation.md](docs/validation.md) | バリデーション・型ガード方針（Valibot） |
+
 ## アーキテクチャ
 
-フロントエンドとAPIは別リポジトリ・別 Vercel プロジェクトに分離されている。
+フロントエンドとAPIは別リポジトリに分離されている。
 
 | | フロントエンド | API |
 |---|---|---|
 | リポジトリ | `nisshi-dev-survey` | `nisshi-dev-survey-api`（本リポ） |
 | ドメイン | survey.nisshi.dev | api.survey.nisshi.dev |
-| Framework | Vite（SPA） | Other |
+| デプロイ先 | Vercel | Cloudflare Workers |
 
 ## 開発手法: TDD（テスト駆動開発）
 
@@ -33,6 +43,7 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 ### 開発
 
 - `npm run dev` — 開発サーバー起動（`@hono/node-server`、ポート 3000）
+- `npm run dev:worker` — Workers 環境でローカルテスト（`wrangler dev`）
 
 ### テスト
 
@@ -61,14 +72,16 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 - `ADMIN_EMAIL` — 管理者ユーザーのメールアドレス（`db:seed` 用）
 - `ADMIN_PASSWORD` — 管理者ユーザーのパスワード（`db:seed` 用）
 
-## Vercel デプロイ
+## Cloudflare Workers デプロイ
 
-- **Framework Preset:** Other
-- **Build Command:** `npm run build:vercel`（`prisma generate`）
-- **Output Directory:** `dist`
+- `npm run deploy` — `wrangler deploy` でデプロイ
+- シークレットは `wrangler secret put <NAME>` で設定（`DATABASE_URL`, `ALLOWED_ORIGIN`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `NISSHI_DEV_SURVEY_API_KEY`）
+- `nodejs_compat` フラグにより `node:crypto`, `node:net` 等の Node.js API を利用可能
 
 ## ドキュメント管理
 
-- コード変更時に、CLAUDE.md の記述が実態と合っているか確認し、古くなっていれば更新する
-  - 例: API ルート追加 → エンドポイント情報を更新
-  - 例: 開発コマンド変更 → 開発コマンド節を更新
+- 詳細なドキュメントは `docs/` に置く。CLAUDE.md には概要とリンクのみ記載する
+- コード変更時に、関連する CLAUDE.md や docs/ の記述が実態と合っているか確認し、古くなっていれば更新する
+  - 例: API ルート追加 → docs/architecture.md の API 一覧を更新
+  - 例: データモデル変更 → docs/overview.md のデータモデル節を更新
+  - 例: 開発コマンド変更 → CLAUDE.md の開発コマンド節を更新

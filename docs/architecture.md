@@ -2,12 +2,13 @@
 
 ## 構成概要
 
-フロントエンドと API は別リポジトリ・別 Vercel プロジェクトに完全分離されている。
+フロントエンドと API は別リポジトリに完全分離されている。
 
 | | フロントエンド | API（本リポ） |
 |---|---|---|
 | リポジトリ | `nisshi-dev-survey` | `nisshi-dev-survey-api` |
 | ドメイン | survey.nisshi.dev | api.survey.nisshi.dev |
+| デプロイ先 | Vercel | Cloudflare Workers |
 | Framework | Vite（SPA） | Hono |
 
 ## 技術スタック
@@ -20,20 +21,19 @@
 | DB | Prisma Postgres + Prisma ORM 7 | マネージド PostgreSQL（`@prisma/adapter-pg` で直接接続） |
 | メール送信 | Resend | 回答コピーメールのトランザクショナル送信 |
 | テスト | Vitest 4.x | TDD ベースのユニットテスト |
-| デプロイ | Vercel（Other preset） | Serverless Function |
+| デプロイ | Cloudflare Workers | `wrangler deploy` |
 
 ## プロジェクト構造
 
 ```
 src/
-├── shared/schema/      # Valibot スキーマ（SSoT）
-├── server/
-│   ├── index.ts         # Hono app エントリ
-│   ├── dev.ts           # 開発サーバー（@hono/node-server）
-│   ├── entry-vercel.ts  # Vercel エントリ（handle(app)）
-│   ├── lib/             # ユーティリティ
-│   ├── middleware/       # ミドルウェア
-│   └── routes/          # ルートハンドラ
+├── index.ts             # Hono app エントリ
+├── dev.ts               # 開発サーバー（@hono/node-server）
+├── worker.ts            # Cloudflare Workers エントリ（env ブリッジ）
+├── schema/              # Valibot スキーマ（SSoT）
+├── lib/                 # ユーティリティ
+├── middleware/           # ミドルウェア
+├── routes/              # ルートハンドラ
 ├── generated/prisma/    # Prisma Client（.gitignore 済み）
 prisma/
 ├── schema.prisma
@@ -117,11 +117,12 @@ scripts/
 - `ADMIN_EMAIL` — 管理者ユーザーのメールアドレス（`db:seed` 用）
 - `ADMIN_PASSWORD` — 管理者ユーザーのパスワード（`db:seed` 用）
 
-## Vercel デプロイ
+## Cloudflare Workers デプロイ
 
-- **Framework Preset:** Other
-- **Build Command:** `npm run build:vercel`（`prisma generate`）
-- **Output Directory:** `dist`
+- `npm run deploy`（`wrangler deploy`）でデプロイ
+- シークレットは `wrangler secret put <NAME>` で設定
+- `wrangler.toml` で `nodejs_compat` フラグを有効化（`node:crypto`, `node:net` 等の利用に必要）
+- Workers エントリポイント: `src/worker.ts`（env ブリッジミドルウェア → `src/index.ts` に委譲）
 
 ## 開発ワークフロー
 

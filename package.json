@@ -3,8 +3,9 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"dev": "tsx watch --env-file=.env src/dev.ts",
-		"build:vercel": "prisma generate",
+		"dev": "tsx watch --env-file=.dev.vars src/dev.ts",
+		"dev:worker": "wrangler dev",
+		"deploy": "wrangler deploy",
 		"generate:openapi": "tsx scripts/generate-openapi.ts",
 		"test": "vitest",
 		"test:run": "vitest run",
@@ -12,7 +13,7 @@
 		"db:migrate": "prisma migrate dev",
 		"db:migrate:deploy": "prisma migrate deploy",
 		"db:studio": "prisma studio",
-		"db:seed": "tsx --env-file=.env scripts/seed-admin.ts",
+		"db:seed": "tsx --env-file=.dev.vars scripts/seed-admin.ts",
 		"postinstall": "prisma generate"
 	},
 	"dependencies": {
@@ -38,6 +39,7 @@
 		"prisma": "7.4.0",
 		"tsx": "4.x",
 		"typescript": "5.x",
-		"vitest": "4.0.18"
+		"vitest": "4.0.18",
+		"wrangler": "^4.66.0"
 	}
 }

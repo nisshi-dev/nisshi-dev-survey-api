@@ -14,12 +14,15 @@ const app = new Hono();
 
 app.use("*", logger());
 
-const allowedOrigin = process.env.ALLOWED_ORIGIN;
 app.use(
 	"*",
 	cors({
-		origin: allowedOrigin || "*",
-		credentials: !!allowedOrigin,
+		origin: (origin) => {
+			const allowed = process.env.ALLOWED_ORIGIN;
+			if (!allowed) return origin;
+			return origin === allowed ? origin : null;
+		},
+		credentials: true,
 	}),
 );
 
