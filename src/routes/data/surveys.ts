@@ -6,7 +6,11 @@ import {
   buildDataEntryResponse,
   validateDataEntryKeys,
 } from "../../lib/survey.js";
-import { ErrorResponseSchema, IdParamSchema } from "../../schema/common.js";
+import {
+  EntryIdParamSchema,
+  ErrorResponseSchema,
+  IdParamSchema,
+} from "../../schema/common.js";
 import {
   AdminSurveyResponseSchema,
   CreateDataEntrySchema,
@@ -15,6 +19,7 @@ import {
   DataEntryResponseSchema,
   DataSubmitResponsesSchema,
   SurveyListResponseSchema,
+  UpdateDataEntrySchema,
   UpdateSurveySchema,
 } from "../../schema/survey.js";
 
@@ -339,6 +344,103 @@ app.post(
     });
 
     return c.json(buildDataEntryResponse(entry, 0), 201);
+  }
+);
+
+app.put(
+  "/:id/data-entries/:entryId",
+  describeRoute({
+    tags: ["Data"],
+    summary: "データエントリ更新（データ投入用）",
+    responses: {
+      200: {
+        description: "更新成功",
+        content: {
+          "application/json": {
+            schema: resolver(DataEntryResponseSchema),
+          },
+        },
+      },
+      404: {
+        description: "見つからない",
+        content: {
+          "application/json": {
+            schema: resolver(ErrorResponseSchema),
+          },
+        },
+      },
+    },
+  }),
+  validator("param", EntryIdParamSchema),
+  validator("json", UpdateDataEntrySchema),
+  async (c) => {
+    const prisma = c.get("prisma");
+    const { entryId } = c.req.valid("param");
+    const { values, label } = c.req.valid("json");
+
+    const existing = await prisma.surveyDataEntry.findUnique({
+      where: { id: entryId },
+      include: { survey: { select: { params: true } } },
+    });
+    if (!existing) {
+      return c.json({ error: "Data entry not found" }, 404);
+    }
+
+    const entry = await prisma.surveyDataEntry.update({
+      where: { id: entryId },
+      data: { values, label: label ?? null },
+    });
+
+    return c.json(buildDataEntryResponse(entry, 0));
+  }
+);
+
+app.delete(
+  "/:id/data-entries/:entryId",
+  describeRoute({
+    tags: ["Data"],
+    summary: "データエントリ削除（データ投入用）",
+    responses: {
+      200: {
+        description: "削除成功",
+      },
+      400: {
+        description: "削除不可",
+        content: {
+          "application/json": {
+            schema: resolver(ErrorResponseSchema),
+          },
+        },
+      },
+      404: {
+        description: "見つからない",
+        content: {
+          "application/json": {
+            schema: resolver(ErrorResponseSchema),
+          },
+        },
+      },
+    },
+  }),
+  validator("param", EntryIdParamSchema),
+  async (c) => {
+    const prisma = c.get("prisma");
+    const { entryId } = c.req.valid("param");
+
+    const existing = await prisma.surveyDataEntry.findUnique({
+      where: { id: entryId },
+      include: { _count: { select: { responses: true } } },
+    });
+    if (!existing) {
+      return c.json({ error: "Data entry not found" }, 404);
+    }
+
+    if (existing._count.responses > 0) {
+      return c.json({ error: "回答が紐づいているため削除できません" }, 400);
+    }
+
+    await prisma.surveyDataEntry.delete({ where: { id: entryId } });
+    return c.json({ success: true });
   }
 );
 

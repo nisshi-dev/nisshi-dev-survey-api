@@ -10,6 +10,9 @@ const mockUpdate = vi.fn();
 const mockCreateMany = vi.fn();
 const mockEntryFindMany = vi.fn();
 const mockEntryCreate = vi.fn();
+const mockEntryFindUnique = vi.fn();
+const mockEntryUpdate = vi.fn();
+const mockEntryDelete = vi.fn();
 
 const mockPrisma = {
   survey: {
@@ -24,6 +27,9 @@ const mockPrisma = {
   surveyDataEntry: {
     findMany: mockEntryFindMany,
     create: mockEntryCreate,
+    findUnique: mockEntryFindUnique,
+    update: mockEntryUpdate,
+    delete: mockEntryDelete,
   },
 };
 
@@ -620,5 +626,142 @@ describe("PUT /data/surveys/:id", () => {
     });
 
     expect(res.status).toBe(400);
+  });
+});
+
+describe("PUT /data/surveys/:id/data-entries/:entryId", () => {
+  beforeEach(() => {
+    mockEntryFindUnique.mockReset();
+    mockEntryUpdate.mockReset();
+  });
+
+  test("values と label を更新し 200 が返る", async () => {
+    const createdAt = new Date("2026-02-17T00:00:00.000Z");
+    mockEntryFindUnique.mockResolvedValue({
+      id: "entry-1",
+      surveyId: "survey-1",
+      values: { event: "旧イベント" },
+      label: "旧ラベル",
+      survey: { params: [{ key: "event", label: "イベント", visible: true }] },
+      createdAt,
+      updatedAt: new Date(),
+    });
+    mockEntryUpdate.mockResolvedValue({
+      id: "entry-1",
+      surveyId: "survey-1",
+      values: { event: "GENkaigi 2026" },
+      label: "GENkaigi 2026 スタッフ",
+      createdAt,
+      updatedAt: new Date(),
+    });
+
+    const app = createApp();
+    const res = await app.request(
+      "/data/surveys/survey-1/data-entries/entry-1",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          values: { event: "GENkaigi 2026" },
+          label: "GENkaigi 2026 スタッフ",
+        }),
+      }
+    );
+
+    expect(res.status).toBe(200);
+    const body: any = await res.json();
+    expect(body.id).toBe("entry-1");
+    expect(body.values).toEqual({ event: "GENkaigi 2026" });
+    expect(body.label).toBe("GENkaigi 2026 スタッフ");
+    expect(body.responseCount).toBe(0);
+  });
+
+  test("存在しないエントリ ID で 404 を返す", async () => {
+    mockEntryFindUnique.mockResolvedValue(null);
+
+    const app = createApp();
+    const res = await app.request(
+      "/data/surveys/survey-1/data-entries/nonexistent",
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          values: { event: "テスト" },
+        }),
+      }
+    );
+
+    expect(res.status).toBe(404);
+    const body: any = await res.json();
+    expect(body.error).toBe("Data entry not found");
+  });
+});
+
+describe("DELETE /data/surveys/:id/data-entries/:entryId", () => {
+  beforeEach(() => {
+    mockEntryFindUnique.mockReset();
+    mockEntryDelete.mockReset();
+  });
+
+  test("回答数 0 のエントリを削除し { success: true } が返る", async () => {
+    mockEntryFindUnique.mockResolvedValue({
+      id: "entry-1",
+      surveyId: "survey-1",
+      values: { event: "テスト" },
+      label: null,
+      _count: { responses: 0 },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockEntryDelete.mockResolvedValue({});
+
+    const app = createApp();
+    const res = await app.request(
+      "/data/surveys/survey-1/data-entries/entry-1",
+      { method: "DELETE" }
+    );
+
+    expect(res.status).toBe(200);
+    const body: any = await res.json();
+    expect(body.success).toBe(true);
+    expect(mockEntryDelete).toHaveBeenCalledWith({
+      where: { id: "entry-1" },
+    });
+  });
+
+  test("回答が紐づいているエントリで 400 を返す", async () => {
+    mockEntryFindUnique.mockResolvedValue({
+      id: "entry-1",
+      surveyId: "survey-1",
+      values: { event: "テスト" },
+      label: null,
+      _count: { responses: 5 },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const app = createApp();
+    const res = await app.request(
+      "/data/surveys/survey-1/data-entries/entry-1",
+      { method: "DELETE" }
+    );
+
+    expect(res.status).toBe(400);
+    const body: any = await res.json();
+    expect(body.error).toBe("回答が紐づいているため削除できません");
+  });
+
+  test("存在しないエントリ ID で 404 を返す", async () => {
+    mockEntryFindUnique.mockResolvedValue(null);
+
+    const app = createApp();
+    const res = await app.request(
+      "/data/surveys/survey-1/data-entries/nonexistent",
+      { method: "DELETE" }
+    );
+
+    expect(res.status).toBe(404);
+    const body: any = await res.json();
+    expect(body.error).toBe("Data entry not found");
   });
 });
