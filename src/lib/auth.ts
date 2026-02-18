@@ -11,6 +11,7 @@ export interface AuthEnv {
 }
 
 export function createAuth(prisma: PrismaClient, env: AuthEnv) {
+  const isHttps = env.BETTER_AUTH_URL.startsWith("https");
   return betterAuth({
     basePath: "/admin/auth",
     baseURL: env.BETTER_AUTH_URL,
@@ -28,8 +29,8 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
         enabled: true,
       },
       defaultCookieAttributes: {
-        sameSite: "none",
-        secure: true,
+        sameSite: isHttps ? "none" : "lax",
+        secure: isHttps,
       },
     },
     databaseHooks: {

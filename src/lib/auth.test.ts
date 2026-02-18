@@ -76,6 +76,30 @@ describe("createAuth", () => {
     ]);
   });
 
+  test("HTTPS 環境では sameSite=none, secure=true の Cookie 設定になる", () => {
+    const env = makeEnv();
+    env.BETTER_AUTH_URL = "https://api.example.com";
+    createAuth({} as never, env);
+
+    const options = mockBetterAuth.mock.calls[0]?.[0];
+    expect(options?.advanced?.defaultCookieAttributes).toEqual({
+      sameSite: "none",
+      secure: true,
+    });
+  });
+
+  test("HTTP 環境では sameSite=lax, secure=false の Cookie 設定になる", () => {
+    const env = makeEnv();
+    env.BETTER_AUTH_URL = "http://localhost:8787";
+    createAuth({} as never, env);
+
+    const options = mockBetterAuth.mock.calls[0]?.[0];
+    expect(options?.advanced?.defaultCookieAttributes).toEqual({
+      sameSite: "lax",
+      secure: false,
+    });
+  });
+
   test("databaseHooks で AllowedEmail に登録済みメールは通過する", async () => {
     const mockFindUnique = vi
       .fn()
