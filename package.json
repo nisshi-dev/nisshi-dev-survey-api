@@ -2,6 +2,21 @@
   "name": "nisshi-dev-survey-api",
   "type": "module",
   "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "24.x",
+      "onFail": "warn"
+    },
+    "packageManager": {
+      "name": "npm",
+      "version": "11.x",
+      "onFail": "warn"
+    }
+  },
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "wrangler dev",
