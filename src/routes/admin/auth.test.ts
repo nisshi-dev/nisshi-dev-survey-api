@@ -2,19 +2,19 @@ import { Hono } from "hono";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import authApp from "./auth";
 
-vi.mock("@/server/lib/db", () => ({
+vi.mock("@/lib/db", () => ({
   prisma: {
     adminUser: { findUnique: vi.fn() },
     session: { create: vi.fn(), delete: vi.fn(), findUnique: vi.fn() },
   },
 }));
 
-vi.mock("@/server/lib/password", () => ({
+vi.mock("@/lib/password", () => ({
   verifyPassword: vi.fn(),
 }));
 
-const { prisma } = await import("@/server/lib/db");
-const { verifyPassword } = await import("@/server/lib/password");
+const { prisma } = await import("@/lib/db");
+const { verifyPassword } = await import("@/lib/password");
 
 const mockFindUser = vi.mocked(prisma.adminUser.findUnique);
 const mockCreateSession = vi.mocked(prisma.session.create);

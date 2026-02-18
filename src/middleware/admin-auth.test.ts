@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { HonoEnv } from "../types";
 import { adminAuth } from "./admin-auth";
 
-vi.mock("@/server/lib/db", () => ({
+vi.mock("@/lib/db", () => ({
   prisma: {
     session: {
       findUnique: vi.fn(),
@@ -12,7 +12,7 @@ vi.mock("@/server/lib/db", () => ({
 }));
 
 // モック後にインポート
-const { prisma } = await import("@/server/lib/db");
+const { prisma } = await import("@/lib/db");
 const mockFindUnique = vi.mocked(prisma.session.findUnique);
 
 function createApp() {

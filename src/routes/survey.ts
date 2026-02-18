@@ -4,7 +4,7 @@ import { safeParse } from "valibot";
 import {
   ErrorResponseSchema,
   IdParamSchema,
-} from "../../shared/schema/common.js";
+} from "../schema/common.js";
 import {
   type Question,
   QuestionsSchema,
@@ -13,7 +13,7 @@ import {
   type SurveyParam,
   SurveyParamsSchema,
   SurveyResponseSchema,
-} from "../../shared/schema/survey.js";
+} from "../schema/survey.js";
 import { prisma } from "../lib/db.js";
 import { sendResponseCopyEmail } from "../lib/email.js";
 

@@ -6,8 +6,8 @@ import {
   LoginResponseSchema,
   LogoutResponseSchema,
   MeResponseSchema,
-} from "../../../shared/schema/auth.js";
-import { ErrorResponseSchema } from "../../../shared/schema/common.js";
+} from "../../schema/auth.js";
+import { ErrorResponseSchema } from "../../schema/common.js";
 import { prisma } from "../../lib/db.js";
 import { verifyPassword } from "../../lib/password.js";
 

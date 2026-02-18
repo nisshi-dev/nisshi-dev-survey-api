@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import surveyApp from "./survey";
 
-vi.mock("@/server/lib/db", () => ({
+vi.mock("@/lib/db", () => ({
   prisma: {
     survey: { findUnique: vi.fn() },
     response: { create: vi.fn() },
@@ -10,16 +10,16 @@ vi.mock("@/server/lib/db", () => ({
   },
 }));
 
-vi.mock("@/server/lib/email", () => ({
+vi.mock("@/lib/email", () => ({
   sendResponseCopyEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
-const { prisma } = await import("@/server/lib/db");
+const { prisma } = await import("@/lib/db");
 const mockFindUnique = vi.mocked(prisma.survey.findUnique);
 const mockCreateResponse = vi.mocked(prisma.response.create);
 const mockEntryFindUnique = vi.mocked(prisma.surveyDataEntry.findUnique);
 
-const { sendResponseCopyEmail } = await import("@/server/lib/email");
+const { sendResponseCopyEmail } = await import("@/lib/email");
 const mockSendEmail = vi.mocked(sendResponseCopyEmail);
 
 function createApp() {

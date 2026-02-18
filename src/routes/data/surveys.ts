@@ -4,7 +4,7 @@ import { safeParse } from "valibot";
 import {
   ErrorResponseSchema,
   IdParamSchema,
-} from "../../../shared/schema/common.js";
+} from "../../schema/common.js";
 import {
   AdminSurveyResponseSchema,
   CreateDataEntrySchema,
@@ -16,7 +16,7 @@ import {
   SurveyListResponseSchema,
   type SurveyParam,
   SurveyParamsSchema,
-} from "../../../shared/schema/survey.js";
+} from "../../schema/survey.js";
 import { prisma } from "../../lib/db.js";
 
 function parseSurveyParams(raw: unknown): SurveyParam[] {

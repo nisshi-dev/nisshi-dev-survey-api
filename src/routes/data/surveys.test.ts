@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import surveysApp from "./surveys";
 
-vi.mock("@/server/lib/db", () => ({
+vi.mock("@/lib/db", () => ({
   prisma: {
     survey: {
       findMany: vi.fn(),
@@ -19,7 +19,7 @@ vi.mock("@/server/lib/db", () => ({
   },
 }));
 
-const { prisma } = await import("@/server/lib/db");
+const { prisma } = await import("@/lib/db");
 const mockFindMany = vi.mocked(prisma.survey.findMany);
 const mockCreate = vi.mocked(prisma.survey.create);
 const mockFindUnique = vi.mocked(prisma.survey.findUnique);

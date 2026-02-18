@@ -11,7 +11,7 @@ import {
   Text,
 } from "@react-email/components";
 import { Resend } from "resend";
-import type { Question } from "../../shared/schema/survey.js";
+import type { Question } from "../schema/survey.js";
 
 interface ResponseCopyEmailProps {
   answers: Record<string, string | string[]>;

@@ -84,14 +84,14 @@ export type SurveyParam = InferOutput<typeof SurveyParamSchema>;
 export const DataEntryValuesSchema = record(string(), string());
 export type DataEntryValues = InferOutput<typeof DataEntryValuesSchema>;
 
-/** POST /api/admin/surveys/:id/data-entries — データエントリ作成 */
+/** POST /admin/surveys/:id/data-entries — データエントリ作成 */
 export const CreateDataEntrySchema = object({
   values: DataEntryValuesSchema,
   label: optional(pipe(string(), maxLength(200))),
 });
 export type CreateDataEntryInput = InferOutput<typeof CreateDataEntrySchema>;
 
-/** PUT /api/admin/surveys/:id/data-entries/:entryId — データエントリ更新 */
+/** PUT /admin/surveys/:id/data-entries/:entryId — データエントリ更新 */
 export const UpdateDataEntrySchema = object({
   values: DataEntryValuesSchema,
   label: optional(pipe(string(), maxLength(200))),
@@ -109,7 +109,7 @@ export const DataEntryResponseSchema = object({
 });
 export type DataEntryResponse = InferOutput<typeof DataEntryResponseSchema>;
 
-/** GET /api/admin/surveys/:id/data-entries — データエントリ一覧レスポンス */
+/** GET /admin/surveys/:id/data-entries — データエントリ一覧レスポンス */
 export const DataEntryListResponseSchema = object({
   dataEntries: array(DataEntryResponseSchema),
 });
@@ -126,12 +126,12 @@ export const SURVEY_STATUS_LABELS: Record<SurveyStatus, string> = {
   completed: "完了",
 } as const;
 
-/** PATCH /api/admin/surveys/:id — ステータス更新リクエスト */
+/** PATCH /admin/surveys/:id — ステータス更新リクエスト */
 export const UpdateSurveyStatusSchema = object({
   status: SurveyStatusSchema,
 });
 
-/** PUT /api/admin/surveys/:id — アンケート内容更新リクエスト */
+/** PUT /admin/surveys/:id — アンケート内容更新リクエスト */
 export const UpdateSurveySchema = object({
   title: pipe(string(), minLength(1)),
   description: optional(pipe(string(), maxLength(10_000))),
@@ -142,7 +142,7 @@ export type UpdateSurveyInput = InferOutput<typeof UpdateSurveySchema>;
 
 // ── データ投入 API スキーマ ──
 
-/** POST /api/data/surveys — アンケート作成（status 指定可） */
+/** POST /data/surveys — アンケート作成（status 指定可） */
 export const DataCreateSurveySchema = object({
   title: pipe(string(), minLength(1)),
   description: optional(pipe(string(), maxLength(10_000))),
@@ -152,7 +152,7 @@ export const DataCreateSurveySchema = object({
 });
 export type DataCreateSurveyInput = InferOutput<typeof DataCreateSurveySchema>;
 
-/** POST /api/data/surveys/:id/responses — 回答一括送信 */
+/** POST /data/surveys/:id/responses — 回答一括送信 */
 export const DataSubmitResponsesSchema = object({
   responses: pipe(
     array(
@@ -171,7 +171,7 @@ export type DataSubmitResponsesInput = InferOutput<
 
 // ── API リクエスト / レスポンス ──
 
-/** POST /api/admin/surveys — アンケート作成リクエスト */
+/** POST /admin/surveys — アンケート作成リクエスト */
 export const CreateSurveySchema = object({
   title: pipe(string(), minLength(1)),
   description: optional(pipe(string(), maxLength(10_000))),
@@ -180,7 +180,7 @@ export const CreateSurveySchema = object({
 });
 export type CreateSurveyInput = InferOutput<typeof CreateSurveySchema>;
 
-/** POST /api/survey/:id/submit — 回答送信リクエスト */
+/** POST /survey/:id/submit — 回答送信リクエスト */
 export const SubmitAnswersSchema = object({
   answers: record(string(), union([string(), array(string())])),
   params: optional(record(string(), string())),
@@ -190,7 +190,7 @@ export const SubmitAnswersSchema = object({
 });
 export type SubmitAnswersInput = InferOutput<typeof SubmitAnswersSchema>;
 
-/** GET /api/survey/:id — アンケート取得レスポンス */
+/** GET /survey/:id — アンケート取得レスポンス */
 export const SurveyResponseSchema = object({
   id: string(),
   title: string(),
@@ -210,13 +210,13 @@ export const SurveyResponseSchema = object({
 });
 export type SurveyResponse = InferOutput<typeof SurveyResponseSchema>;
 
-/** POST /api/survey/:id/submit — 回答送信成功レスポンス */
+/** POST /survey/:id/submit — 回答送信成功レスポンス */
 export const SubmitSuccessResponseSchema = object({
   success: boolean(),
   surveyId: string(),
 });
 
-/** GET /api/admin/surveys — アンケート一覧レスポンス */
+/** GET /admin/surveys — アンケート一覧レスポンス */
 export const SurveyListResponseSchema = object({
   surveys: array(
     object({
@@ -228,7 +228,7 @@ export const SurveyListResponseSchema = object({
   ),
 });
 
-/** GET /api/admin/surveys/:id — アンケート詳細レスポンス */
+/** GET /admin/surveys/:id — アンケート詳細レスポンス */
 export const AdminSurveyResponseSchema = object({
   id: string(),
   title: string(),
@@ -240,7 +240,7 @@ export const AdminSurveyResponseSchema = object({
   dataEntries: optional(array(DataEntryResponseSchema)),
 });
 
-/** GET /api/admin/surveys/:id/responses — 回答一覧レスポンス */
+/** GET /admin/surveys/:id/responses — 回答一覧レスポンス */
 export const SurveyResponsesSchema = object({
   surveyId: string(),
   responses: array(

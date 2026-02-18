@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { Question } from "@/shared/schema/survey";
+import type { Question } from "@/schema/survey";
 import { buildResponseEmailHtml } from "./email";
 
 describe("buildResponseEmailHtml", () => {
