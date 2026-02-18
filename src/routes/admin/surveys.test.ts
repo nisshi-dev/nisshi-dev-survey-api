@@ -64,7 +64,7 @@ describe("GET /admin/surveys", () => {
     const app = createApp();
     const res = await app.request("/admin/surveys");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.surveys).toHaveLength(1);
     expect(body.surveys[0].id).toBe("survey-1");
     expect(body.surveys[0].title).toBe("テストアンケート");
@@ -99,7 +99,7 @@ describe("POST /admin/surveys", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("survey-new");
     expect(body.title).toBe("新しいアンケート");
     expect(body.status).toBe("draft");
@@ -135,7 +135,7 @@ describe("POST /admin/surveys", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("survey-desc");
     expect(body.description).toBe(description);
   });
@@ -163,7 +163,7 @@ describe("GET /admin/surveys/:id", () => {
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("survey-1");
     expect(body.title).toBe("テストアンケート");
     expect(body.description).toBe("テスト説明");
@@ -181,7 +181,7 @@ describe("GET /admin/surveys/:id", () => {
     const app = createApp();
     const res = await app.request("/admin/surveys/nonexistent");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 });
@@ -220,7 +220,7 @@ describe("PATCH /admin/surveys/:id", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.status).toBe("active");
   });
 
@@ -235,7 +235,7 @@ describe("PATCH /admin/surveys/:id", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -293,7 +293,7 @@ describe("PUT /admin/surveys/:id", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.title).toBe("新タイトル");
     expect(body.description).toBe("新しい説明");
     // Valibot パースにより required: false, allowOther: false がデフォルト追加される
@@ -342,7 +342,7 @@ describe("PUT /admin/surveys/:id", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.title).toBe("新タイトル");
     expect(body.description).toBe("説明追加");
   });
@@ -371,7 +371,7 @@ describe("PUT /admin/surveys/:id", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe(
       "Cannot modify questions for active or completed survey"
     );
@@ -401,7 +401,7 @@ describe("PUT /admin/surveys/:id", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe(
       "Cannot modify questions for active or completed survey"
     );
@@ -421,7 +421,7 @@ describe("PUT /admin/surveys/:id", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 });
@@ -458,7 +458,7 @@ describe("DELETE /admin/surveys/:id", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.success).toBe(true);
   });
 
@@ -488,7 +488,7 @@ describe("DELETE /admin/surveys/:id", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.success).toBe(true);
   });
 
@@ -509,7 +509,7 @@ describe("DELETE /admin/surveys/:id", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Completed survey cannot be deleted");
   });
 
@@ -522,7 +522,7 @@ describe("DELETE /admin/surveys/:id", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 });
@@ -553,7 +553,7 @@ describe("GET /admin/surveys/:id/responses", () => {
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1/responses");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.surveyId).toBe("survey-1");
     expect(body.responses).toHaveLength(1);
     expect(body.responses[0].answers).toEqual({ q1: "回答です" });
@@ -565,7 +565,7 @@ describe("GET /admin/surveys/:id/responses", () => {
     const app = createApp();
     const res = await app.request("/admin/surveys/nonexistent/responses");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -592,7 +592,7 @@ describe("GET /admin/surveys/:id/responses", () => {
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1/responses");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.responses[0].params).toEqual({
       version: "v2",
       date: "2026-02-15",
@@ -630,7 +630,7 @@ describe("GET /admin/surveys/:id/responses", () => {
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1/responses");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.responses[0].dataEntryId).toBe("entry-1");
     expect(body.responses[1].dataEntryId).toBeNull();
   });
@@ -663,7 +663,7 @@ describe("POST /admin/surveys with params", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.params).toEqual(params);
   });
 });
@@ -690,7 +690,7 @@ describe("GET /admin/surveys/:id with params", () => {
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.params).toEqual(params);
   });
 });
@@ -736,7 +736,7 @@ describe("PUT /admin/surveys/:id with params", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.params).toEqual(newParams);
   });
 });
@@ -765,7 +765,7 @@ describe("GET /admin/surveys/:id/data-entries", () => {
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1/data-entries");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.dataEntries).toEqual([]);
   });
 
@@ -796,7 +796,7 @@ describe("GET /admin/surveys/:id/data-entries", () => {
     const app = createApp();
     const res = await app.request("/admin/surveys/survey-1/data-entries");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.dataEntries).toHaveLength(1);
     expect(body.dataEntries[0].id).toBe("entry-1");
     expect(body.dataEntries[0].values).toEqual({ event: "Event A" });
@@ -849,7 +849,7 @@ describe("POST /admin/surveys/:id/data-entries", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("entry-new");
     expect(body.values).toEqual({ event: "GENkaigi 2026" });
   });
@@ -885,7 +885,7 @@ describe("POST /admin/surveys/:id/data-entries", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.label).toBe("GENkaigi 2026 in Shibuya");
   });
 
@@ -909,7 +909,7 @@ describe("POST /admin/surveys/:id/data-entries", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toContain("unknown_key");
   });
 
@@ -968,7 +968,7 @@ describe("PUT /admin/surveys/:id/data-entries/:entryId", () => {
     );
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.values).toEqual({ event: "新イベント" });
     expect(body.label).toBe("新ラベル");
   });
@@ -1022,7 +1022,7 @@ describe("DELETE /admin/surveys/:id/data-entries/:entryId", () => {
     );
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.success).toBe(true);
   });
 
@@ -1044,7 +1044,7 @@ describe("DELETE /admin/surveys/:id/data-entries/:entryId", () => {
     );
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toContain("回答が紐づいているため削除できません");
   });
 

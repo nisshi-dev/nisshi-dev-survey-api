@@ -57,7 +57,7 @@ describe("GET /survey/:id", () => {
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("survey-1");
     expect(body.title).toBe("テストアンケート");
     expect(body.description).toBe("テスト説明");
@@ -73,7 +73,7 @@ describe("GET /survey/:id", () => {
     const app = createApp();
     const res = await app.request("/survey/nonexistent");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -91,7 +91,7 @@ describe("GET /survey/:id", () => {
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -109,7 +109,7 @@ describe("GET /survey/:id", () => {
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -137,7 +137,7 @@ describe("GET /survey/:id", () => {
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.questions[0].allowOther).toBe(true);
   });
 
@@ -158,7 +158,7 @@ describe("GET /survey/:id", () => {
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.params).toEqual(params);
   });
 });
@@ -196,7 +196,7 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.success).toBe(true);
     expect(body.surveyId).toBe("survey-1");
   });
@@ -212,7 +212,7 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -235,7 +235,7 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -258,7 +258,7 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -343,7 +343,7 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBeDefined();
   });
 
@@ -456,7 +456,7 @@ describe("POST /survey/:id/submit", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.success).toBe(true);
   });
 });
@@ -488,7 +488,7 @@ describe("GET /survey/:id with dataEntries", () => {
     const app = createApp();
     const res = await app.request("/survey/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.dataEntries).toHaveLength(1);
     expect(body.dataEntries[0].id).toBe("entry-1");
     expect(body.dataEntries[0].values).toEqual({ event: "Event A" });
@@ -577,7 +577,7 @@ describe("POST /survey/:id/submit with dataEntryId", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Data entry not found");
   });
 });
@@ -609,7 +609,7 @@ describe("POST /survey/:id/submit required validation", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toContain("q1");
   });
 
@@ -640,7 +640,7 @@ describe("POST /survey/:id/submit required validation", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toContain("q1");
   });
 
@@ -671,7 +671,7 @@ describe("POST /survey/:id/submit required validation", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toContain("q1");
   });
 

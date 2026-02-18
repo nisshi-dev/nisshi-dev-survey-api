@@ -62,7 +62,7 @@ describe("POST /data/surveys", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("survey-1");
     expect(body.status).toBe("draft");
     expect(body.createdAt).toBe(createdAt.toISOString());
@@ -93,7 +93,7 @@ describe("POST /data/surveys", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.status).toBe("active");
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -124,7 +124,7 @@ describe("POST /data/surveys", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.params).toEqual(params);
   });
 });
@@ -151,7 +151,7 @@ describe("GET /data/surveys", () => {
     const app = createApp();
     const res = await app.request("/data/surveys");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.surveys).toHaveLength(1);
     expect(body.surveys[0].id).toBe("survey-1");
     expect(body.surveys[0].createdAt).toBe(createdAt.toISOString());
@@ -191,7 +191,7 @@ describe("GET /data/surveys/:id", () => {
     const app = createApp();
     const res = await app.request("/data/surveys/survey-1");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("survey-1");
     expect(body.dataEntries).toHaveLength(1);
     expect(body.dataEntries[0].id).toBe("entry-1");
@@ -205,7 +205,7 @@ describe("GET /data/surveys/:id", () => {
     const app = createApp();
     const res = await app.request("/data/surveys/nonexistent");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 });
@@ -242,7 +242,7 @@ describe("POST /data/surveys/:id/responses", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.count).toBe(2);
     expect(mockCreateMany).toHaveBeenCalledWith({
       data: [
@@ -308,7 +308,7 @@ describe("POST /data/surveys/:id/responses", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -334,7 +334,7 @@ describe("POST /data/surveys/:id/responses", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey is not active");
   });
 });
@@ -371,7 +371,7 @@ describe("GET /data/surveys/:id/data-entries", () => {
     const app = createApp();
     const res = await app.request("/data/surveys/survey-1/data-entries");
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.dataEntries).toHaveLength(1);
     expect(body.dataEntries[0].id).toBe("entry-1");
     expect(body.dataEntries[0].responseCount).toBe(3);
@@ -383,7 +383,7 @@ describe("GET /data/surveys/:id/data-entries", () => {
     const app = createApp();
     const res = await app.request("/data/surveys/nonexistent/data-entries");
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 });
@@ -425,7 +425,7 @@ describe("POST /data/surveys/:id/data-entries", () => {
     });
 
     expect(res.status).toBe(201);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.id).toBe("entry-new");
     expect(body.values).toEqual({ version: "v2.0" });
     expect(body.label).toBe("v2.0 リリース");
@@ -443,7 +443,7 @@ describe("POST /data/surveys/:id/data-entries", () => {
     });
 
     expect(res.status).toBe(404);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Survey not found");
   });
 
@@ -467,7 +467,7 @@ describe("POST /data/surveys/:id/data-entries", () => {
     });
 
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toContain("Invalid keys");
   });
 });

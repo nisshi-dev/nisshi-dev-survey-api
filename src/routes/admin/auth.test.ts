@@ -67,7 +67,7 @@ describe("POST /admin/auth/login", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.message).toBe("Login successful");
     const cookie = res.headers.get("set-cookie");
     expect(cookie).toContain("session=session-1");
@@ -88,7 +88,7 @@ describe("POST /admin/auth/login", () => {
     });
 
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Invalid email or password");
   });
 
@@ -112,7 +112,7 @@ describe("POST /admin/auth/login", () => {
     });
 
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Invalid email or password");
   });
 });
@@ -137,7 +137,7 @@ describe("POST /admin/auth/logout", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.message).toBe("Logged out");
     expect(mockDeleteSession).toHaveBeenCalledWith({
       where: { id: "session-1" },
@@ -168,7 +168,7 @@ describe("GET /admin/auth/me", () => {
     });
 
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body).toEqual({
       id: "user-1",
       email: "admin@example.com",
@@ -180,7 +180,7 @@ describe("GET /admin/auth/me", () => {
     const res = await app.request("/admin/auth/me");
 
     expect(res.status).toBe(401);
-    const body = await res.json();
+    const body: any = await res.json();
     expect(body.error).toBe("Unauthorized");
   });
 });

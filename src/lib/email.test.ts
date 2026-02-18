@@ -1,10 +1,9 @@
 import { describe, expect, test } from "vitest";
-import type { Question } from "@/schema/survey";
 import { buildResponseEmailHtml } from "./email";
 
 describe("buildResponseEmailHtml", () => {
   test("タイトル・質問・回答を含む HTML を生成する", async () => {
-    const questions: Question[] = [{ type: "text", id: "q1", label: "お名前" }];
+    const questions: any[] = [{ type: "text", id: "q1", label: "お名前" }];
     const answers: Record<string, string | string[]> = { q1: "田中太郎" };
 
     const html = await buildResponseEmailHtml(
@@ -19,7 +18,7 @@ describe("buildResponseEmailHtml", () => {
   });
 
   test("質問番号 (Q1, Q2...) を正確に付与する", async () => {
-    const questions: Question[] = [
+    const questions: any[] = [
       { type: "text", id: "q1", label: "質問1" },
       { type: "text", id: "q2", label: "質問2" },
       { type: "text", id: "q3", label: "質問3" },
@@ -38,7 +37,7 @@ describe("buildResponseEmailHtml", () => {
   });
 
   test("checkbox の回答を「、」区切りで結合表示する", async () => {
-    const questions: Question[] = [
+    const questions: any[] = [
       {
         type: "checkbox",
         id: "q1",
@@ -56,7 +55,7 @@ describe("buildResponseEmailHtml", () => {
   });
 
   test("回答がない質問は空文字で表示する", async () => {
-    const questions: Question[] = [
+    const questions: any[] = [
       { type: "text", id: "q1", label: "任意の質問" },
     ];
     const answers: Record<string, string | string[]> = {};
