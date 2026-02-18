@@ -1,5 +1,5 @@
-import type { MiddlewareHandler } from "hono";
 import { PrismaPg } from "@prisma/adapter-pg";
+import type { MiddlewareHandler } from "hono";
 import { PrismaClient } from "../generated/prisma/client.js";
 import type { HonoEnv } from "../index.js";
 

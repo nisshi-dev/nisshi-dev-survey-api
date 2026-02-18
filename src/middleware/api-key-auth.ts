@@ -9,7 +9,7 @@ async function timingSafeCompare(a: string, b: string): Promise<boolean> {
     encoder.encode(a),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign", "verify"],
+    ["sign", "verify"]
   );
   const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(a));
   return crypto.subtle.verify("HMAC", key, signature, encoder.encode(b));
@@ -26,7 +26,10 @@ export const apiKeyAuth: MiddlewareHandler<HonoEnv> = async (c, next) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  if (expected.length !== provided.length || !(await timingSafeCompare(expected, provided))) {
+  if (
+    expected.length !== provided.length ||
+    !(await timingSafeCompare(expected, provided))
+  ) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 

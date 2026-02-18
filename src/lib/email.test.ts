@@ -55,9 +55,7 @@ describe("buildResponseEmailHtml", () => {
   });
 
   test("回答がない質問は空文字で表示する", async () => {
-    const questions: any[] = [
-      { type: "text", id: "q1", label: "任意の質問" },
-    ];
+    const questions: any[] = [{ type: "text", id: "q1", label: "任意の質問" }];
     const answers: Record<string, string | string[]> = {};
 
     const html = await buildResponseEmailHtml("アンケート", questions, answers);

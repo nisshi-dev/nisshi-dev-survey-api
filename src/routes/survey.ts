@@ -2,10 +2,8 @@ import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
 import { safeParse } from "valibot";
 import type { HonoEnv } from "../index.js";
-import {
-  ErrorResponseSchema,
-  IdParamSchema,
-} from "../schema/common.js";
+import { sendResponseCopyEmail } from "../lib/email.js";
+import { ErrorResponseSchema, IdParamSchema } from "../schema/common.js";
 import {
   type Question,
   QuestionsSchema,
@@ -15,7 +13,6 @@ import {
   SurveyParamsSchema,
   SurveyResponseSchema,
 } from "../schema/survey.js";
-import { sendResponseCopyEmail } from "../lib/email.js";
 
 function parseSurveyParams(raw: unknown): SurveyParam[] {
   const result = safeParse(SurveyParamsSchema, raw);
@@ -92,11 +89,13 @@ app.get(
       description: survey.description,
       questions: parsed.success ? parsed.output : [],
       params: parseSurveyParams(survey.params),
-      dataEntries: survey.dataEntries.map((e: { id: string; values: unknown; label: string | null }) => ({
-        id: e.id,
-        values: e.values as Record<string, string>,
-        label: e.label,
-      })),
+      dataEntries: survey.dataEntries.map(
+        (e: { id: string; values: unknown; label: string | null }) => ({
+          id: e.id,
+          values: e.values as Record<string, string>,
+          label: e.label,
+        })
+      ),
     });
   }
 );

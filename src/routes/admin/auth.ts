@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { describeRoute, resolver, validator } from "hono-openapi";
 import type { HonoEnv } from "../../index.js";
+import { verifyPassword } from "../../lib/password.js";
 import {
   LoginRequestSchema,
   LoginResponseSchema,
@@ -9,7 +10,6 @@ import {
   MeResponseSchema,
 } from "../../schema/auth.js";
 import { ErrorResponseSchema } from "../../schema/common.js";
-import { verifyPassword } from "../../lib/password.js";
 
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 

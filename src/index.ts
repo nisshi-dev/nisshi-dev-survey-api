@@ -13,19 +13,19 @@ import dataSurveys from "./routes/data/surveys.js";
 import survey from "./routes/survey.js";
 
 type Bindings = {
-	DATABASE_URL: string;
-	ALLOWED_ORIGIN: string;
-	RESEND_API_KEY: string;
-	RESEND_FROM_EMAIL: string;
-	NISSHI_DEV_SURVEY_API_KEY: string;
+  DATABASE_URL: string;
+  ALLOWED_ORIGIN: string;
+  RESEND_API_KEY: string;
+  RESEND_FROM_EMAIL: string;
+  NISSHI_DEV_SURVEY_API_KEY: string;
 };
 
 export interface HonoEnv {
-	Bindings: Bindings;
-	Variables: {
-		prisma: PrismaClient;
-		user: { id: string; email: string };
-	};
+  Bindings: Bindings;
+  Variables: {
+    prisma: PrismaClient;
+    user: { id: string; email: string };
+  };
 }
 
 const app = new Hono<HonoEnv>();
@@ -34,15 +34,17 @@ app.use("*", withPrisma);
 app.use("*", logger());
 
 app.use(
-	"*",
-	cors({
-		origin: (origin, c) => {
-			const allowed = c.env.ALLOWED_ORIGIN;
-			if (!allowed) return origin;
-			return origin === allowed ? origin : null;
-		},
-		credentials: true,
-	}),
+  "*",
+  cors({
+    origin: (origin, c) => {
+      const allowed = c.env.ALLOWED_ORIGIN;
+      if (!allowed) {
+        return origin;
+      }
+      return origin === allowed ? origin : null;
+    },
+    credentials: true,
+  })
 );
 
 app.get("/health", (c) => c.json({ status: "ok" }));

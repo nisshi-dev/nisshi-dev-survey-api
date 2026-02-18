@@ -2,10 +2,7 @@ import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
 import { safeParse } from "valibot";
 import type { HonoEnv } from "../../index.js";
-import {
-  ErrorResponseSchema,
-  IdParamSchema,
-} from "../../schema/common.js";
+import { ErrorResponseSchema, IdParamSchema } from "../../schema/common.js";
 import {
   AdminSurveyResponseSchema,
   CreateDataEntrySchema,

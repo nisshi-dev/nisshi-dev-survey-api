@@ -82,9 +82,9 @@ export async function buildResponseEmailHtml(
 interface SendResponseCopyEmailParams {
   answers: Record<string, string | string[]>;
   questions: Question[];
+  resendApiKey: string;
   surveyTitle: string;
   to: string;
-  resendApiKey: string;
 }
 
 export async function sendResponseCopyEmail({
