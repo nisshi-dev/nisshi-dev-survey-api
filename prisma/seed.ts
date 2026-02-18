@@ -1,16 +1,11 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client.js";
-import { hashPassword } from "../src/lib/password.js";
 
 const email = process.env.ADMIN_EMAIL;
-const password = process.env.ADMIN_PASSWORD;
-
 const databaseUrl = process.env.DATABASE_URL;
 
-if (!(email && password && databaseUrl)) {
-  console.error(
-    "ADMIN_EMAIL, ADMIN_PASSWORD, DATABASE_URL environment variables are required"
-  );
+if (!(email && databaseUrl)) {
+  console.error("ADMIN_EMAIL, DATABASE_URL environment variables are required");
   process.exit(1);
 }
 
@@ -19,14 +14,12 @@ const adapter = new PrismaPg({
 });
 const prisma = new PrismaClient({ adapter });
 
-const passwordHash = await hashPassword(password);
-
-const user = await prisma.adminUser.upsert({
+const allowed = await prisma.allowedEmail.upsert({
   where: { email },
-  update: { passwordHash },
-  create: { email, passwordHash },
+  update: {},
+  create: { email },
 });
 
-console.log(`Admin user created/updated: ${user.email} (${user.id})`);
+console.log(`Allowed email registered: ${allowed.email} (${allowed.id})`);
 
 await prisma.$disconnect();
