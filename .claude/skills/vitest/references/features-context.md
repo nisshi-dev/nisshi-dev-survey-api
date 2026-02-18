@@ -1,53 +1,53 @@
 ---
 name: test-context-fixtures
-description: Test context, custom fixtures with test.extend
+description: テストコンテキスト、test.extend によるカスタムフィクスチャ
 ---
 
-# Test Context & Fixtures
+# テストコンテキストとフィクスチャ
 
-## Built-in Context
+## 組み込みコンテキスト
 
-Every test receives context as first argument:
+すべてのテストは第一引数としてコンテキストを受け取る:
 
 ```ts
-test('context', ({ task, expect, skip }) => {
-  console.log(task.name)  // Test name
-  expect(1).toBe(1)       // Context-bound expect
-  skip()                  // Skip test dynamically
+test('コンテキスト', ({ task, expect, skip }) => {
+  console.log(task.name)  // テスト名
+  expect(1).toBe(1)       // コンテキストに紐づいた expect
+  skip()                  // テストを動的にスキップ
 })
 ```
 
-### Context Properties
+### コンテキストのプロパティ
 
-- `task` - Test metadata (name, file, etc.)
-- `expect` - Expect bound to this test (important for concurrent tests)
-- `skip(condition?, message?)` - Skip the test
-- `onTestFinished(fn)` - Cleanup after test
-- `onTestFailed(fn)` - Run on failure only
+- `task` - テストのメタデータ（名前、ファイルなど）
+- `expect` - このテストに紐づいた expect（並行テストで重要）
+- `skip(condition?, message?)` - テストをスキップ
+- `onTestFinished(fn)` - テスト後のクリーンアップ
+- `onTestFailed(fn)` - 失敗時のみ実行
 
-## Custom Fixtures with test.extend
+## test.extend によるカスタムフィクスチャ
 
-Create reusable test utilities:
+再利用可能なテストユーティリティを作成する:
 
 ```ts
 import { test as base } from 'vitest'
 
-// Define fixture types
+// フィクスチャの型を定義
 interface Fixtures {
   db: Database
   user: User
 }
 
-// Create extended test
+// 拡張テストを作成
 export const test = base.extend<Fixtures>({
-  // Fixture with setup/teardown
+  // セットアップ / ティアダウン付きフィクスチャ
   db: async ({}, use) => {
     const db = await createDatabase()
-    await use(db)           // Provide to test
-    await db.close()        // Cleanup
+    await use(db)           // テストに提供
+    await db.close()        // クリーンアップ
   },
-  
-  // Fixture depending on another fixture
+
+  // 別のフィクスチャに依存するフィクスチャ
   user: async ({ db }, use) => {
     const user = await db.createUser({ name: 'Test' })
     await use(user)
@@ -56,34 +56,34 @@ export const test = base.extend<Fixtures>({
 })
 ```
 
-Using fixtures:
+フィクスチャの使用:
 
 ```ts
-test('query user', async ({ db, user }) => {
+test('ユーザー検索', async ({ db, user }) => {
   const found = await db.findUser(user.id)
   expect(found).toEqual(user)
 })
 ```
 
-## Fixture Initialization
+## フィクスチャの初期化
 
-Fixtures only initialize when accessed:
+フィクスチャはアクセスされた時のみ初期化される:
 
 ```ts
 const test = base.extend({
   expensive: async ({}, use) => {
-    console.log('initializing')  // Only runs if test uses it
+    console.log('初期化中')  // テストが使用する場合のみ実行
     await use('value')
   },
 })
 
-test('no fixture', () => {})           // expensive not called
-test('uses fixture', ({ expensive }) => {}) // expensive called
+test('フィクスチャなし', () => {})           // expensive は呼ばれない
+test('フィクスチャ使用', ({ expensive }) => {}) // expensive が呼ばれる
 ```
 
-## Auto Fixtures
+## 自動フィクスチャ
 
-Run fixture for every test:
+すべてのテストでフィクスチャを実行する:
 
 ```ts
 const test = base.extend({
@@ -93,16 +93,16 @@ const test = base.extend({
       await use()
       await globalTeardown()
     },
-    { auto: true }  // Always run
+    { auto: true }  // 常に実行
   ],
 })
 ```
 
-## Scoped Fixtures
+## スコープ付きフィクスチャ
 
-### File Scope
+### ファイルスコープ
 
-Initialize once per file:
+ファイルごとに一度だけ初期化する:
 
 ```ts
 const test = base.extend({
@@ -117,9 +117,9 @@ const test = base.extend({
 })
 ```
 
-### Worker Scope
+### ワーカースコープ
 
-Initialize once per worker:
+ワーカーごとに一度だけ初期化する:
 
 ```ts
 const test = base.extend({
@@ -132,12 +132,12 @@ const test = base.extend({
 })
 ```
 
-## Injected Fixtures (from Config)
+## インジェクトフィクスチャ（設定から注入）
 
-Override fixtures per project:
+プロジェクトごとにフィクスチャを上書きする:
 
 ```ts
-// test file
+// テストファイル
 const test = base.extend({
   apiUrl: ['/default', { injected: true }],
 })
@@ -157,31 +157,31 @@ defineConfig({
 })
 ```
 
-## Scoped Values per Suite
+## スイートごとのスコープ値
 
-Override fixture for specific suite:
+特定のスイートでフィクスチャを上書きする:
 
 ```ts
 const test = base.extend({
   environment: 'development',
 })
 
-describe('production tests', () => {
+describe('本番テスト', () => {
   test.scoped({ environment: 'production' })
-  
-  test('uses production', ({ environment }) => {
+
+  test('本番環境を使用', ({ environment }) => {
     expect(environment).toBe('production')
   })
 })
 
-test('uses default', ({ environment }) => {
+test('デフォルトを使用', ({ environment }) => {
   expect(environment).toBe('development')
 })
 ```
 
-## Extended Test Hooks
+## 拡張テストフック
 
-Type-aware hooks with fixtures:
+フィクスチャの型情報を持つフック:
 
 ```ts
 const test = base.extend<{ db: Database }>({
@@ -192,7 +192,7 @@ const test = base.extend<{ db: Database }>({
   },
 })
 
-// Hooks know about fixtures
+// フックがフィクスチャを認識する
 test.beforeEach(({ db }) => {
   db.seed()
 })
@@ -202,9 +202,9 @@ test.afterEach(({ db }) => {
 })
 ```
 
-## Composing Fixtures
+## フィクスチャの合成
 
-Extend from another extended test:
+拡張テストからさらに拡張する:
 
 ```ts
 // base-test.ts
@@ -223,16 +223,16 @@ export const test = dbTest.extend<{ admin: User }>({
 })
 ```
 
-## Key Points
+## 重要ポイント
 
-- Use `{ }` destructuring to access fixtures
-- Fixtures are lazy - only initialize when accessed
-- Return cleanup function from fixtures
-- Use `{ auto: true }` for setup fixtures
-- Use `{ scope: 'file' }` for expensive shared resources
-- Fixtures compose - extend from extended tests
+- `{ }` デストラクチャリングでフィクスチャにアクセスする
+- フィクスチャは遅延評価 — アクセス時のみ初期化される
+- フィクスチャからクリーンアップ関数を返す
+- `{ auto: true }` でセットアップフィクスチャを使用
+- `{ scope: 'file' }` でコストの高い共有リソースに使用
+- フィクスチャは合成可能 — 拡張テストからさらに拡張できる
 
-<!-- 
+<!--
 Source references:
 - https://vitest.dev/guide/test-context.html
 -->

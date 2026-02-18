@@ -1,114 +1,114 @@
 ---
 name: concurrency-parallelism
-description: Concurrent tests, parallel execution, and sharding
+description: 並行テスト、並列実行、シャーディング
 ---
 
-# Concurrency & Parallelism
+# 並行実行と並列処理
 
-## File Parallelism
+## ファイルの並列実行
 
-By default, Vitest runs test files in parallel across workers:
+デフォルトで、Vitest はテストファイルをワーカー間で並列に実行する:
 
 ```ts
 defineConfig({
   test: {
-    // Run files in parallel (default: true)
+    // ファイルを並列に実行（デフォルト: true）
     fileParallelism: true,
-    
-    // Number of worker threads
+
+    // ワーカースレッド数
     maxWorkers: 4,
     minWorkers: 1,
-    
-    // Pool type: 'threads', 'forks', 'vmThreads'
+
+    // プールの種類: 'threads', 'forks', 'vmThreads'
     pool: 'threads',
   },
 })
 ```
 
-## Concurrent Tests
+## 並行テスト
 
-Run tests within a file in parallel:
+ファイル内のテストを並行に実行する:
 
 ```ts
-// Individual concurrent tests
-test.concurrent('test 1', async ({ expect }) => {
+// 個別の並行テスト
+test.concurrent('テスト 1', async ({ expect }) => {
   expect(await fetch1()).toBe('result')
 })
 
-test.concurrent('test 2', async ({ expect }) => {
+test.concurrent('テスト 2', async ({ expect }) => {
   expect(await fetch2()).toBe('result')
 })
 
-// All tests in suite concurrent
-describe.concurrent('parallel suite', () => {
-  test('test 1', async ({ expect }) => {})
-  test('test 2', async ({ expect }) => {})
+// スイート内の全テストを並行実行
+describe.concurrent('並列スイート', () => {
+  test('テスト 1', async ({ expect }) => {})
+  test('テスト 2', async ({ expect }) => {})
 })
 ```
 
-**Important:** Use `{ expect }` from context for concurrent tests.
+**重要:** 並行テストではコンテキストの `{ expect }` を使用すること。
 
-## Sequential in Concurrent Context
+## 並行コンテキスト内での逐次実行
 
-Force sequential execution:
+逐次実行を強制する:
 
 ```ts
-describe.concurrent('mostly parallel', () => {
-  test('parallel 1', async () => {})
-  test('parallel 2', async () => {})
-  
-  test.sequential('must run alone 1', async () => {})
-  test.sequential('must run alone 2', async () => {})
+describe.concurrent('ほぼ並列', () => {
+  test('並列 1', async () => {})
+  test('並列 2', async () => {})
+
+  test.sequential('単独実行 1', async () => {})
+  test.sequential('単独実行 2', async () => {})
 })
 
-// Or entire suite
-describe.sequential('sequential suite', () => {
-  test('first', () => {})
-  test('second', () => {})
+// スイート全体を逐次実行
+describe.sequential('逐次スイート', () => {
+  test('最初', () => {})
+  test('次', () => {})
 })
 ```
 
-## Max Concurrency
+## 最大並行数
 
-Limit concurrent tests:
+並行テスト数を制限する:
 
 ```ts
 defineConfig({
   test: {
-    maxConcurrency: 5, // Max concurrent tests per file
+    maxConcurrency: 5, // ファイルごとの最大並行テスト数
   },
 })
 ```
 
-## Isolation
+## アイソレーション
 
-Each file runs in isolated environment by default:
+デフォルトでは各ファイルが分離された環境で実行される:
 
 ```ts
 defineConfig({
   test: {
-    // Disable isolation for faster runs (less safe)
+    // アイソレーションを無効化して高速化（安全性は低下）
     isolate: false,
   },
 })
 ```
 
-## Sharding
+## シャーディング
 
-Split tests across machines:
+テストを複数マシンに分割する:
 
 ```bash
-# Machine 1
+# マシン 1
 vitest run --shard=1/3
 
-# Machine 2
+# マシン 2
 vitest run --shard=2/3
 
-# Machine 3
+# マシン 3
 vitest run --shard=3/3
 ```
 
-### CI Example (GitHub Actions)
+### CI での例（GitHub Actions）
 
 ```yaml
 jobs:
@@ -118,69 +118,69 @@ jobs:
         shard: [1, 2, 3]
     steps:
       - run: vitest run --shard=${{ matrix.shard }}/3 --reporter=blob
-      
+
   merge:
     needs: test
     steps:
       - run: vitest --merge-reports --reporter=junit
 ```
 
-### Merge Reports
+### レポートのマージ
 
 ```bash
-# Each shard outputs blob
+# 各シャードが blob を出力
 vitest run --shard=1/3 --reporter=blob --coverage
 vitest run --shard=2/3 --reporter=blob --coverage
 
-# Merge all blobs
+# すべての blob をマージ
 vitest --merge-reports --reporter=json --coverage
 ```
 
-## Test Sequence
+## テスト順序
 
-Control test order:
+テストの実行順序を制御する:
 
 ```ts
 defineConfig({
   test: {
     sequence: {
-      // Run tests in random order
+      // テストをランダム順で実行
       shuffle: true,
-      
-      // Seed for reproducible shuffle
+
+      // 再現可能なシャッフルのシード値
       seed: 12345,
-      
-      // Hook execution order
+
+      // フック実行順序
       hooks: 'stack', // 'stack', 'list', 'parallel'
-      
-      // All tests concurrent by default
+
+      // デフォルトで全テストを並行実行
       concurrent: true,
     },
   },
 })
 ```
 
-## Shuffle Tests
+## テストのシャッフル
 
-Randomize to catch hidden dependencies:
+隠れた依存関係を検出するためにランダム化する:
 
 ```ts
-// Via CLI
+// CLI 経由
 vitest --sequence.shuffle
 
-// Per suite
-describe.shuffle('random order', () => {
-  test('test 1', () => {})
-  test('test 2', () => {})
-  test('test 3', () => {})
+// スイートごと
+describe.shuffle('ランダム順序', () => {
+  test('テスト 1', () => {})
+  test('テスト 2', () => {})
+  test('テスト 3', () => {})
 })
 ```
 
-## Pool Options
+## プールオプション
 
 4.0 では `poolOptions.threads.maxThreads` / `poolOptions.forks.maxForks` は廃止され、トップレベルの `maxWorkers` / `minWorkers` に統合。
 
-### Threads (Default)
+### Threads（デフォルト）
 
 ```ts
 defineConfig({
@@ -195,7 +195,7 @@ defineConfig({
 
 ### Forks
 
-Better isolation, slower:
+アイソレーションが強いが低速:
 
 ```ts
 defineConfig({
@@ -209,7 +209,7 @@ defineConfig({
 
 ### VM Threads
 
-Full VM isolation per file:
+ファイルごとに完全な VM アイソレーション:
 
 ```ts
 defineConfig({
@@ -219,27 +219,27 @@ defineConfig({
 })
 ```
 
-## Bail on Failure
+## 失敗時の中断
 
-Stop after first failure:
+最初の失敗で停止する:
 
 ```bash
-vitest --bail 1    # Stop after 1 failure
-vitest --bail      # Stop on first failure (same as --bail 1)
+vitest --bail 1    # 1 件の失敗で停止
+vitest --bail      # 最初の失敗で停止（--bail 1 と同じ）
 ```
 
-## Key Points
+## 重要ポイント
 
-- Files run in parallel by default
-- Use `.concurrent` for parallel tests within file
-- Always use context's `expect` in concurrent tests
-- Sharding splits tests across CI machines
-- Use `--merge-reports` to combine sharded results
-- Shuffle tests to find hidden dependencies
+- ファイルはデフォルトで並列実行される
+- ファイル内の並列テストには `.concurrent` を使用
+- 並行テストでは必ずコンテキストの `expect` を使用する
+- シャーディングで CI マシン間にテストを分散
+- `--merge-reports` でシャーディング結果を統合
+- テストをシャッフルして隠れた依存関係を検出
 - 4.0: `poolOptions.threads.maxThreads` / `poolOptions.forks.maxForks` → `maxWorkers` に統合
 - 4.0: `singleThread` / `singleFork` → `maxWorkers: 1, isolate: false` に統合
 
-<!-- 
+<!--
 Source references:
 - https://vitest.dev/guide/features.html#running-tests-concurrently
 - https://vitest.dev/guide/improving-performance.html

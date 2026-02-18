@@ -1,166 +1,166 @@
 ---
 name: better-auth-best-practices
-description: Skill for integrating Better Auth - the comprehensive TypeScript authentication framework.
+description: Better Auth（TypeScript 認証フレームワーク）の統合ガイド。セットアップ、セッション管理、プラグイン、セキュリティ設定に精通。
 ---
 
-# Better Auth Integration Guide
+# Better Auth 統合ガイド
 
-**Always consult [better-auth.com/docs](https://better-auth.com/docs) for code examples and latest API.**
+**コード例と最新 API は [better-auth.com/docs](https://better-auth.com/docs) を必ず参照すること。**
 
-Better Auth is a TypeScript-first, framework-agnostic auth framework supporting email/password, OAuth, magic links, passkeys, and more via plugins.
-
----
-
-## Quick Reference
-
-### Environment Variables
-- `BETTER_AUTH_SECRET` - Encryption secret (min 32 chars). Generate: `openssl rand -base64 32`
-- `BETTER_AUTH_URL` - Base URL (e.g., `https://example.com`)
-
-Only define `baseURL`/`secret` in config if env vars are NOT set.
-
-### File Location
-CLI looks for `auth.ts` in: `./`, `./lib`, `./utils`, or under `./src`. Use `--config` for custom path.
-
-### CLI Commands
-- `npx @better-auth/cli@latest migrate` - Apply schema (built-in adapter)
-- `npx @better-auth/cli@latest generate` - Generate schema for Prisma/Drizzle
-- `npx @better-auth/cli mcp --cursor` - Add MCP to AI tools
-
-**Re-run after adding/changing plugins.**
+Better Auth は TypeScript ファーストでフレームワーク非依存の認証フレームワーク。メール/パスワード、OAuth、マジックリンク、パスキーなどをプラグインでサポート。
 
 ---
 
-## Core Config Options
+## クイックリファレンス
 
-| Option | Notes |
-|--------|-------|
-| `appName` | Optional display name |
-| `baseURL` | Only if `BETTER_AUTH_URL` not set |
-| `basePath` | Default `/api/auth`. Set `/` for root. |
-| `secret` | Only if `BETTER_AUTH_SECRET` not set |
-| `database` | Required for most features. See adapters docs. |
-| `secondaryStorage` | Redis/KV for sessions & rate limits |
-| `emailAndPassword` | `{ enabled: true }` to activate |
+### 環境変数
+- `BETTER_AUTH_SECRET` - 暗号化シークレット（最低 32 文字）。生成: `openssl rand -base64 32`
+- `BETTER_AUTH_URL` - ベース URL（例: `https://example.com`）
+
+環境変数が設定されていない場合のみ、config で `baseURL`/`secret` を定義する。
+
+### ファイルの配置場所
+CLI は `auth.ts` を以下の順で検索: `./`, `./lib`, `./utils`, または `./src` 配下。カスタムパスは `--config` で指定。
+
+### CLI コマンド
+- `npx @better-auth/cli@latest migrate` - スキーマ適用（組み込みアダプター）
+- `npx @better-auth/cli@latest generate` - Prisma/Drizzle 用スキーマ生成
+- `npx @better-auth/cli mcp --cursor` - AI ツールに MCP を追加
+
+**プラグインの追加・変更後は必ず再実行すること。**
+
+---
+
+## コア設定オプション
+
+| オプション | 説明 |
+|-----------|------|
+| `appName` | 表示名（任意） |
+| `baseURL` | `BETTER_AUTH_URL` 未設定時のみ |
+| `basePath` | デフォルト `/api/auth`。ルートに配置する場合は `/` |
+| `secret` | `BETTER_AUTH_SECRET` 未設定時のみ |
+| `database` | ほとんどの機能で必須。アダプタードキュメント参照 |
+| `secondaryStorage` | セッション・レート制限用の Redis/KV |
+| `emailAndPassword` | `{ enabled: true }` で有効化 |
 | `socialProviders` | `{ google: { clientId, clientSecret }, ... }` |
-| `plugins` | Array of plugins |
-| `trustedOrigins` | CSRF whitelist |
+| `plugins` | プラグインの配列 |
+| `trustedOrigins` | CSRF ホワイトリスト |
 
 ---
 
-## Database
+## データベース
 
-**Direct connections:** Pass `pg.Pool`, `mysql2` pool, `better-sqlite3`, or `bun:sqlite` instance.
+**直接接続:** `pg.Pool`、`mysql2` プール、`better-sqlite3`、または `bun:sqlite` インスタンスを渡す。
 
-**ORM adapters:** Import from `better-auth/adapters/drizzle`, `better-auth/adapters/prisma`, `better-auth/adapters/mongodb`.
+**ORM アダプター:** `better-auth/adapters/drizzle`、`better-auth/adapters/prisma`、`better-auth/adapters/mongodb` からインポート。
 
-**Critical:** Better Auth uses adapter model names, NOT underlying table names. If Prisma model is `User` mapping to table `users`, use `modelName: "user"` (Prisma reference), not `"users"`.
-
----
-
-## Session Management
-
-**Storage priority:**
-1. If `secondaryStorage` defined → sessions go there (not DB)
-2. Set `session.storeSessionInDatabase: true` to also persist to DB
-3. No database + `cookieCache` → fully stateless mode
-
-**Cookie cache strategies:**
-- `compact` (default) - Base64url + HMAC. Smallest.
-- `jwt` - Standard JWT. Readable but signed.
-- `jwe` - Encrypted. Maximum security.
-
-**Key options:** `session.expiresIn` (default 7 days), `session.updateAge` (refresh interval), `session.cookieCache.maxAge`, `session.cookieCache.version` (change to invalidate all sessions).
+**重要:** Better Auth はアダプターのモデル名を使用し、DB のテーブル名は使わない。Prisma モデルが `User` でテーブルが `users` にマッピングされている場合、`modelName: "user"`（Prisma の参照名）を使い、`"users"` ではない。
 
 ---
 
-## User & Account Config
+## セッション管理
 
-**User:** `user.modelName`, `user.fields` (column mapping), `user.additionalFields`, `user.changeEmail.enabled` (disabled by default), `user.deleteUser.enabled` (disabled by default).
+**ストレージの優先順位:**
+1. `secondaryStorage` が定義されている場合 → セッションはそこに保存（DB ではない）
+2. DB にも永続化する場合は `session.storeSessionInDatabase: true` を設定
+3. DB なし + `cookieCache` → 完全ステートレスモード
 
-**Account:** `account.modelName`, `account.accountLinking.enabled`, `account.storeAccountCookie` (for stateless OAuth).
+**Cookie キャッシュ戦略:**
+- `compact`（デフォルト）- Base64url + HMAC。最小サイズ
+- `jwt` - 標準 JWT。読み取り可能だが署名付き
+- `jwe` - 暗号化。最大セキュリティ
 
-**Required for registration:** `email` and `name` fields.
-
----
-
-## Email Flows
-
-- `emailVerification.sendVerificationEmail` - Must be defined for verification to work
-- `emailVerification.sendOnSignUp` / `sendOnSignIn` - Auto-send triggers
-- `emailAndPassword.sendResetPassword` - Password reset email handler
+**主要オプション:** `session.expiresIn`（デフォルト 7 日）、`session.updateAge`（リフレッシュ間隔）、`session.cookieCache.maxAge`、`session.cookieCache.version`（変更するとすべてのセッションを無効化）。
 
 ---
 
-## Security
+## ユーザーとアカウント設定
 
-**In `advanced`:**
-- `useSecureCookies` - Force HTTPS cookies
-- `disableCSRFCheck` - ⚠️ Security risk
-- `disableOriginCheck` - ⚠️ Security risk  
-- `crossSubDomainCookies.enabled` - Share cookies across subdomains
-- `ipAddress.ipAddressHeaders` - Custom IP headers for proxies
-- `database.generateId` - Custom ID generation or `"serial"`/`"uuid"`/`false`
+**ユーザー:** `user.modelName`、`user.fields`（カラムマッピング）、`user.additionalFields`、`user.changeEmail.enabled`（デフォルト無効）、`user.deleteUser.enabled`（デフォルト無効）。
 
-**Rate limiting:** `rateLimit.enabled`, `rateLimit.window`, `rateLimit.max`, `rateLimit.storage` ("memory" | "database" | "secondary-storage").
+**アカウント:** `account.modelName`、`account.accountLinking.enabled`、`account.storeAccountCookie`（ステートレス OAuth 用）。
+
+**登録に必須:** `email` と `name` フィールド。
 
 ---
 
-## Hooks
+## メールフロー
 
-**Endpoint hooks:** `hooks.before` / `hooks.after` - Array of `{ matcher, handler }`. Use `createAuthMiddleware`. Access `ctx.path`, `ctx.context.returned` (after), `ctx.context.session`.
-
-**Database hooks:** `databaseHooks.user.create.before/after`, same for `session`, `account`. Useful for adding default values or post-creation actions.
-
-**Hook context (`ctx.context`):** `session`, `secret`, `authCookies`, `password.hash()`/`verify()`, `adapter`, `internalAdapter`, `generateId()`, `tables`, `baseURL`.
+- `emailVerification.sendVerificationEmail` - 認証を機能させるには定義が必須
+- `emailVerification.sendOnSignUp` / `sendOnSignIn` - 自動送信トリガー
+- `emailAndPassword.sendResetPassword` - パスワードリセットメールハンドラー
 
 ---
 
-## Plugins
+## セキュリティ
 
-**Import from dedicated paths for tree-shaking:**
+**`advanced` 内:**
+- `useSecureCookies` - HTTPS Cookie を強制
+- `disableCSRFCheck` - セキュリティリスクあり
+- `disableOriginCheck` - セキュリティリスクあり
+- `crossSubDomainCookies.enabled` - サブドメイン間で Cookie を共有
+- `ipAddress.ipAddressHeaders` - プロキシ用カスタム IP ヘッダー
+- `database.generateId` - カスタム ID 生成、または `"serial"`/`"uuid"`/`false`
+
+**レート制限:** `rateLimit.enabled`、`rateLimit.window`、`rateLimit.max`、`rateLimit.storage`（"memory" | "database" | "secondary-storage"）。
+
+---
+
+## フック
+
+**エンドポイントフック:** `hooks.before` / `hooks.after` - `{ matcher, handler }` の配列。`createAuthMiddleware` を使用。`ctx.path`、`ctx.context.returned`（after）、`ctx.context.session` にアクセス可能。
+
+**データベースフック:** `databaseHooks.user.create.before/after`、`session`、`account` も同様。デフォルト値の追加や作成後のアクションに有用。
+
+**フックコンテキスト (`ctx.context`):** `session`、`secret`、`authCookies`、`password.hash()`/`verify()`、`adapter`、`internalAdapter`、`generateId()`、`tables`、`baseURL`。
+
+---
+
+## プラグイン
+
+**ツリーシェイキングのため専用パスからインポート:**
 ```
 import { twoFactor } from "better-auth/plugins/two-factor"
 ```
-NOT `from "better-auth/plugins"`.
+`from "better-auth/plugins"` からはインポートしない。
 
-**Popular plugins:** `twoFactor`, `organization`, `passkey`, `magicLink`, `emailOtp`, `username`, `phoneNumber`, `admin`, `apiKey`, `bearer`, `jwt`, `multiSession`, `sso`, `oauthProvider`, `oidcProvider`, `openAPI`, `genericOAuth`.
+**主要プラグイン:** `twoFactor`、`organization`、`passkey`、`magicLink`、`emailOtp`、`username`、`phoneNumber`、`admin`、`apiKey`、`bearer`、`jwt`、`multiSession`、`sso`、`oauthProvider`、`oidcProvider`、`openAPI`、`genericOAuth`。
 
-Client plugins go in `createAuthClient({ plugins: [...] })`.
-
----
-
-## Client
-
-Import from: `better-auth/client` (vanilla), `better-auth/react`, `better-auth/vue`, `better-auth/svelte`, `better-auth/solid`.
-
-Key methods: `signUp.email()`, `signIn.email()`, `signIn.social()`, `signOut()`, `useSession()`, `getSession()`, `revokeSession()`, `revokeSessions()`.
+クライアントプラグインは `createAuthClient({ plugins: [...] })` に配置。
 
 ---
 
-## Type Safety
+## クライアント
 
-Infer types: `typeof auth.$Infer.Session`, `typeof auth.$Infer.Session.user`.
+インポート元: `better-auth/client`（バニラ）、`better-auth/react`、`better-auth/vue`、`better-auth/svelte`、`better-auth/solid`。
 
-For separate client/server projects: `createAuthClient<typeof auth>()`.
-
----
-
-## Common Gotchas
-
-1. **Model vs table name** - Config uses ORM model name, not DB table name
-2. **Plugin schema** - Re-run CLI after adding plugins
-3. **Secondary storage** - Sessions go there by default, not DB
-4. **Cookie cache** - Custom session fields NOT cached, always re-fetched
-5. **Stateless mode** - No DB = session in cookie only, logout on cache expiry
-6. **Change email flow** - Sends to current email first, then new email
+主要メソッド: `signUp.email()`、`signIn.email()`、`signIn.social()`、`signOut()`、`useSession()`、`getSession()`、`revokeSession()`、`revokeSessions()`。
 
 ---
 
-## Resources
+## 型安全性
 
-- [Docs](https://better-auth.com/docs)
-- [Options Reference](https://better-auth.com/docs/reference/options)
+型の推論: `typeof auth.$Infer.Session`、`typeof auth.$Infer.Session.user`。
+
+クライアント/サーバーが別プロジェクトの場合: `createAuthClient<typeof auth>()`。
+
+---
+
+## よくあるハマりどころ
+
+1. **モデル名 vs テーブル名** - 設定では ORM のモデル名を使用し、DB のテーブル名は使わない
+2. **プラグインのスキーマ** - プラグイン追加後に CLI を再実行する
+3. **セカンダリストレージ** - セッションはデフォルトでそちらに保存され、DB には保存されない
+4. **Cookie キャッシュ** - カスタムセッションフィールドはキャッシュされず、常に再取得される
+5. **ステートレスモード** - DB なし = セッションは Cookie のみ、キャッシュ期限でログアウト
+6. **メールアドレス変更フロー** - まず現在のメールに送信、その後新しいメールに送信
+
+---
+
+## リソース
+
+- [ドキュメント](https://better-auth.com/docs)
+- [オプションリファレンス](https://better-auth.com/docs/reference/options)
 - [LLMs.txt](https://better-auth.com/llms.txt)
 - [GitHub](https://github.com/better-auth/better-auth)
-- [Init Options Source](https://github.com/better-auth/better-auth/blob/main/packages/core/src/types/init-options.ts)
+- [初期化オプションのソース](https://github.com/better-auth/better-auth/blob/main/packages/core/src/types/init-options.ts)

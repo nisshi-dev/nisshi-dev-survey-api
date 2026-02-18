@@ -1,89 +1,89 @@
 ---
 name: expect-api
-description: Assertions with matchers, asymmetric matchers, and custom matchers
+description: マッチャー、非対称マッチャー、カスタムマッチャーによるアサーション
 ---
 
 # Expect API
 
-Vitest uses Chai assertions with Jest-compatible API.
+Vitest は Jest 互換 API を備えた Chai アサーションを使用する。
 
-## Basic Assertions
+## 基本アサーション
 
 ```ts
 import { expect, test } from 'vitest'
 
 test('assertions', () => {
-  // Equality
-  expect(1 + 1).toBe(2)              // Strict equality (===)
-  expect({ a: 1 }).toEqual({ a: 1 }) // Deep equality
+  // 等値比較
+  expect(1 + 1).toBe(2)              // 厳密等価（===）
+  expect({ a: 1 }).toEqual({ a: 1 }) // ディープ等価
 
-  // Truthiness
+  // 真偽値
   expect(true).toBeTruthy()
   expect(false).toBeFalsy()
   expect(null).toBeNull()
   expect(undefined).toBeUndefined()
   expect('value').toBeDefined()
 
-  // Numbers
+  // 数値
   expect(10).toBeGreaterThan(5)
   expect(10).toBeGreaterThanOrEqual(10)
   expect(5).toBeLessThan(10)
   expect(0.1 + 0.2).toBeCloseTo(0.3, 5)
 
-  // Strings
+  // 文字列
   expect('hello world').toMatch(/world/)
   expect('hello').toContain('ell')
 
-  // Arrays
+  // 配列
   expect([1, 2, 3]).toContain(2)
   expect([{ a: 1 }]).toContainEqual({ a: 1 })
   expect([1, 2, 3]).toHaveLength(3)
 
-  // Objects
+  // オブジェクト
   expect({ a: 1, b: 2 }).toHaveProperty('a')
   expect({ a: 1, b: 2 }).toHaveProperty('a', 1)
   expect({ a: { b: 1 } }).toHaveProperty('a.b', 1)
   expect({ a: 1 }).toMatchObject({ a: 1 })
 
-  // Types
+  // 型
   expect('string').toBeTypeOf('string')
   expect(new Date()).toBeInstanceOf(Date)
 })
 ```
 
-## Negation
+## 否定
 
 ```ts
 expect(1).not.toBe(2)
 expect({ a: 1 }).not.toEqual({ a: 2 })
 ```
 
-## Error Assertions
+## エラーアサーション
 
 ```ts
-// Sync errors - wrap in function
+// 同期エラー — 関数でラップする
 expect(() => throwError()).toThrow()
 expect(() => throwError()).toThrow('message')
 expect(() => throwError()).toThrow(/pattern/)
 expect(() => throwError()).toThrow(CustomError)
 
-// Async errors - use rejects
+// 非同期エラー — rejects を使用する
 await expect(asyncThrow()).rejects.toThrow('error')
 ```
 
-## Promise Assertions
+## Promise アサーション
 
 ```ts
-// Resolves
+// resolves
 await expect(Promise.resolve(1)).resolves.toBe(1)
 await expect(fetchData()).resolves.toEqual({ data: true })
 
-// Rejects
+// rejects
 await expect(Promise.reject('error')).rejects.toBe('error')
 await expect(failingFetch()).rejects.toThrow()
 ```
 
-## Spy/Mock Assertions
+## スパイ/モックアサーション
 
 ```ts
 const fn = vi.fn()
@@ -100,9 +100,9 @@ expect(fn).toHaveReturned()
 expect(fn).toHaveReturnedWith(value)
 ```
 
-## Asymmetric Matchers
+## 非対称マッチャー
 
-Use inside `toEqual`, `toHaveBeenCalledWith`, etc:
+`toEqual`、`toHaveBeenCalledWith` 等の内部で使用する:
 
 ```ts
 expect({ id: 1, name: 'test' }).toEqual({
@@ -127,28 +127,28 @@ expect('hello world').toEqual(
 )
 
 expect({ value: null }).toEqual({
-  value: expect.anything() // Matches anything except null/undefined
+  value: expect.anything() // null/undefined 以外のすべてにマッチ
 })
 
-// Negate with expect.not
+// expect.not で否定
 expect([1, 2]).toEqual(
   expect.not.arrayContaining([3])
 )
 ```
 
-## Soft Assertions
+## ソフトアサーション
 
-Continue test after failure:
+失敗してもテストを続行する:
 
 ```ts
-expect.soft(1).toBe(2) // Marks test failed but continues
-expect.soft(2).toBe(3) // Also runs
-// All failures reported at end
+expect.soft(1).toBe(2) // テストを失敗としてマークするが続行する
+expect.soft(2).toBe(3) // こちらも実行される
+// すべての失敗が最後にレポートされる
 ```
 
-## Poll Assertions
+## ポーリングアサーション
 
-Retry until passes:
+パスするまでリトライする:
 
 ```ts
 await expect.poll(() => fetchStatus()).toBe('ready')
@@ -159,12 +159,12 @@ await expect.poll(
 ).toBeTruthy()
 ```
 
-## Assertion Count
+## アサーション回数の検証
 
 ```ts
 test('async assertions', async () => {
-  expect.assertions(2) // Exactly 2 assertions must run
-  
+  expect.assertions(2) // 正確に2つのアサーションが実行されること
+
   await doAsync((data) => {
     expect(data).toBeDefined()
     expect(data.id).toBe(1)
@@ -172,11 +172,11 @@ test('async assertions', async () => {
 })
 
 test('at least one', () => {
-  expect.hasAssertions() // At least 1 assertion must run
+  expect.hasAssertions() // 少なくとも1つのアサーションが実行されること
 })
 ```
 
-## Extending Matchers
+## マッチャーの拡張
 
 ```ts
 expect.extend({
@@ -184,7 +184,7 @@ expect.extend({
     const pass = received >= floor && received <= ceiling
     return {
       pass,
-      message: () => 
+      message: () =>
         `expected ${received} to be within range ${floor} - ${ceiling}`,
     }
   },
@@ -195,7 +195,7 @@ test('custom matcher', () => {
 })
 ```
 
-## Snapshot Assertions
+## スナップショットアサーション
 
 ```ts
 expect(data).toMatchSnapshot()
@@ -245,18 +245,18 @@ await expect(page.locator('.header')).toBeInViewport()
 await expect(page.locator('.section')).toBeInViewport({ ratio: 0.5 })
 ```
 
-## Key Points
+## 重要ポイント
 
-- Use `toBe` for primitives, `toEqual` for objects/arrays
-- `toStrictEqual` checks undefined properties and array sparseness
-- Always `await` async assertions (`resolves`, `rejects`, `poll`)
-- Use context's `expect` in concurrent tests for correct tracking
-- `toThrow` requires wrapping sync code in a function
+- プリミティブには `toBe`、オブジェクト/配列には `toEqual` を使用する
+- `toStrictEqual` は undefined プロパティや配列のスパース性もチェックする
+- 非同期アサーション（`resolves`、`rejects`、`poll`）は必ず `await` する
+- 並行テストでは正しいトラッキングのためにコンテキストの `expect` を使用する
+- `toThrow` は同期コードを関数でラップする必要がある
 - 4.0: `expect.assert` で Chai assert + 型の絞り込み
 - 4.0: `toMatchSchema` で Standard Schema v1 バリデーション
 - 4.0: `toMatchScreenshot` / `toBeInViewport` でビジュアルリグレッション（ブラウザモード）
 
-<!-- 
+<!--
 Source references:
 - https://vitest.dev/api/expect.html
 -->
