@@ -178,6 +178,7 @@ app.post(
     if (sendCopy && respondentEmail) {
       sendResponseCopyEmail({
         to: respondentEmail,
+        from: c.env.RESEND_FROM_EMAIL,
         surveyTitle: survey.title,
         questions,
         answers,
