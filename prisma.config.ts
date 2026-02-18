@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 if (existsSync(".dev.vars")) {
   process.loadEnvFile(".dev.vars");
@@ -8,7 +8,8 @@ if (existsSync(".dev.vars")) {
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
-    url: env("DATABASE_URL"),
+    // prisma generate 時は DB 接続不要のため、未設定時は空文字にフォールバック
+    url: process.env.DATABASE_URL ?? "",
   },
   migrations: {
     path: "prisma/migrations",
