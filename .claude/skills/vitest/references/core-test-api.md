@@ -1,11 +1,11 @@
 ---
 name: test-api
-description: test/it function for defining tests with modifiers
+description: テスト定義のための test/it 関数と修飾子
 ---
 
 # Test API
 
-## Basic Test
+## 基本的なテスト
 
 ```ts
 import { expect, test } from 'vitest'
@@ -14,7 +14,7 @@ test('adds numbers', () => {
   expect(1 + 1).toBe(2)
 })
 
-// Alias: it
+// エイリアス: it
 import { it } from 'vitest'
 
 it('works the same', () => {
@@ -22,7 +22,7 @@ it('works the same', () => {
 })
 ```
 
-## Async Tests
+## 非同期テスト
 
 ```ts
 test('async test', async () => {
@@ -30,7 +30,7 @@ test('async test', async () => {
   expect(result).toBeDefined()
 })
 
-// Promises are automatically awaited
+// Promise は自動的に await される
 test('returns promise', () => {
   return fetchData().then(result => {
     expect(result).toBeDefined()
@@ -38,15 +38,15 @@ test('returns promise', () => {
 })
 ```
 
-## Test Options
+## テストオプション
 
 ```ts
-// Timeout (default: 5000ms)
+// タイムアウト（デフォルト: 5000ms）
 test('slow test', async () => {
   // ...
 }, 10_000)
 
-// With options object (4.0: オプションは必ず第2引数。第3引数は不可)
+// オプションオブジェクト（4.0: オプションは必ず第2引数。第3引数は不可）
 test('with options', { timeout: 10_000, retry: 2 }, async () => {
   // ...
 })
@@ -56,58 +56,58 @@ test('with options', { timeout: 10_000, retry: 2 }, async () => {
 // ✓ test('name', { timeout: 10_000 }, () => {})
 ```
 
-## Test Modifiers
+## テスト修飾子
 
-### Skip Tests
+### テストのスキップ
 
 ```ts
 test.skip('skipped test', () => {
-  // Won't run
+  // 実行されない
 })
 
-// Conditional skip
+// 条件付きスキップ
 test.skipIf(process.env.CI)('not in CI', () => {})
 test.runIf(process.env.CI)('only in CI', () => {})
 
-// Dynamic skip via context
+// コンテキストによる動的スキップ
 test('dynamic skip', ({ skip }) => {
   skip(someCondition, 'reason')
   // ...
 })
 ```
 
-### Focus Tests
+### テストのフォーカス
 
 ```ts
 test.only('only this runs', () => {
-  // Other tests in file are skipped
+  // ファイル内の他のテストはスキップされる
 })
 ```
 
-### Todo Tests
+### Todo テスト
 
 ```ts
 test.todo('implement later')
 
 test.todo('with body', () => {
-  // Not run, shows in report
+  // 実行されないが、レポートに表示される
 })
 ```
 
-### Failing Tests
+### 失敗を期待するテスト
 
 ```ts
 test.fails('expected to fail', () => {
-  expect(1).toBe(2) // Test passes because assertion fails
+  expect(1).toBe(2) // アサーションが失敗するのでテストはパスする
 })
 ```
 
-### Concurrent Tests
+### 並行テスト
 
 ```ts
-// Run tests in parallel
+// テストを並列実行する
 test.concurrent('test 1', async ({ expect }) => {
-  // Use context.expect for concurrent tests
+  // 並行テストではコンテキストの expect を使用する
   expect(await fetch1()).toBe('result')
 })
 
@@ -116,14 +116,14 @@ test.concurrent('test 2', async ({ expect }) => {
 })
 ```
 
-### Sequential Tests
+### 逐次テスト
 
 ```ts
-// Force sequential in concurrent context
+// 並行コンテキスト内で逐次実行を強制する
 test.sequential('must run alone', async () => {})
 ```
 
-## Parameterized Tests
+## パラメータ化テスト
 
 ### test.each
 
@@ -136,7 +136,7 @@ test.each([
   expect(a + b).toBe(expected)
 })
 
-// With objects
+// オブジェクトを使用
 test.each([
   { a: 1, b: 1, expected: 2 },
   { a: 1, b: 2, expected: 3 },
@@ -144,7 +144,7 @@ test.each([
   expect(a + b).toBe(expected)
 })
 
-// Template literal
+// テンプレートリテラル
 test.each`
   a    | b    | expected
   ${1} | ${1} | ${2}
@@ -156,31 +156,31 @@ test.each`
 
 ### test.for
 
-Preferred over `.each` - doesn't spread arrays:
+`.each` より推奨 — 配列を自動展開しない:
 
 ```ts
 test.for([
   [1, 1, 2],
   [1, 2, 3],
 ])('add(%i, %i) = %i', ([a, b, expected], { expect }) => {
-  // Second arg is TestContext
+  // 第2引数は TestContext
   expect(a + b).toBe(expected)
 })
 ```
 
-## Test Context
+## テストコンテキスト
 
-First argument provides context utilities:
+第1引数でコンテキストユーティリティを提供する:
 
 ```ts
 test('with context', ({ expect, skip, task }) => {
-  console.log(task.name)   // Test name
-  skip(someCondition)      // Skip dynamically
-  expect(1).toBe(1)        // Context-bound expect
+  console.log(task.name)   // テスト名
+  skip(someCondition)      // 動的にスキップ
+  expect(1).toBe(1)        // コンテキストに紐づいた expect
 })
 ```
 
-## Custom Test with Fixtures
+## フィクスチャを使用したカスタムテスト
 
 ```ts
 import { test as base } from 'vitest'
@@ -199,40 +199,40 @@ test('query', async ({ db }) => {
 })
 ```
 
-## Retry Configuration
+## リトライ設定
 
 ```ts
 test('flaky test', { retry: 3 }, async () => {
-  // Retries up to 3 times on failure
+  // 失敗時に最大3回リトライする
 })
 
-// Advanced retry options
+// 詳細なリトライオプション
 test('with delay', {
   retry: {
     count: 3,
     delay: 1000,
-    condition: /timeout/i, // Only retry on timeout errors
+    condition: /timeout/i, // タイムアウトエラーの場合のみリトライ
   },
 }, async () => {})
 ```
 
-## Tags
+## タグ
 
 ```ts
 test('database test', { tags: ['db', 'slow'] }, async () => {})
 
-// Run with: vitest --tags db
+// 実行: vitest --tags db
 ```
 
-## Key Points
+## 重要ポイント
 
-- Tests with no body are marked as `todo`
-- `test.only` throws in CI unless `allowOnly: true`
-- Use context's `expect` for concurrent tests and snapshots
-- Function name is used as test name if passed as first arg
-- 4.0: Options as 3rd argument (`test('name', fn, options)`) は廃止
+- 本体のないテストは `todo` としてマークされる
+- `test.only` は CI では `allowOnly: true` でない限りエラーになる
+- 並行テストやスナップショットではコンテキストの `expect` を使用する
+- 第1引数に関数を渡すと、その関数名がテスト名として使用される
+- 4.0: 第3引数でのオプション指定（`test('name', fn, options)`）は廃止
 
-<!-- 
+<!--
 Source references:
 - https://vitest.dev/api/test.html
 -->

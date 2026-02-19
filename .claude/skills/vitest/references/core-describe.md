@@ -1,13 +1,13 @@
 ---
 name: describe-api
-description: describe/suite for grouping tests into logical blocks
+description: テストを論理ブロックにグルーピングするための describe/suite
 ---
 
 # Describe API
 
-Group related tests into suites for organization and shared setup.
+関連するテストをスイートにグルーピングし、セットアップを共有する。
 
-## Basic Usage
+## 基本的な使い方
 
 ```ts
 import { describe, expect, test } from 'vitest'
@@ -22,12 +22,12 @@ describe('Math', () => {
   })
 })
 
-// Alias: suite
+// エイリアス: suite
 import { suite } from 'vitest'
 suite('equivalent to describe', () => {})
 ```
 
-## Nested Suites
+## ネストされたスイート
 
 ```ts
 describe('User', () => {
@@ -42,33 +42,33 @@ describe('User', () => {
 })
 ```
 
-## Suite Options
+## スイートオプション
 
 ```ts
-// All tests inherit options (4.0: オプションは必ず第2引数)
+// すべてのテストがオプションを継承する（4.0: オプションは必ず第2引数）
 describe('slow tests', { timeout: 30_000 }, () => {
-  test('test 1', () => {}) // 30s timeout
-  test('test 2', () => {}) // 30s timeout
+  test('test 1', () => {}) // 30秒のタイムアウト
+  test('test 2', () => {}) // 30秒のタイムアウト
 })
 
 // ⚠️ 4.0 で削除: describe('name', fn, options) 形式は使えない
 ```
 
-## Suite Modifiers
+## スイート修飾子
 
-### Skip Suites
+### スイートのスキップ
 
 ```ts
 describe.skip('skipped suite', () => {
   test('wont run', () => {})
 })
 
-// Conditional
+// 条件付き
 describe.skipIf(process.env.CI)('not in CI', () => {})
 describe.runIf(!process.env.CI)('only local', () => {})
 ```
 
-### Focus Suites
+### スイートのフォーカス
 
 ```ts
 describe.only('only this suite runs', () => {
@@ -76,28 +76,28 @@ describe.only('only this suite runs', () => {
 })
 ```
 
-### Todo Suites
+### Todo スイート
 
 ```ts
 describe.todo('implement later')
 ```
 
-### Concurrent Suites
+### 並行スイート
 
 ```ts
-// All tests run in parallel
+// すべてのテストが並列実行される
 describe.concurrent('parallel tests', () => {
   test('test 1', async ({ expect }) => {})
   test('test 2', async ({ expect }) => {})
 })
 ```
 
-### Sequential in Concurrent
+### 並行コンテキスト内での逐次実行
 
 ```ts
 describe.concurrent('parallel', () => {
   test('concurrent 1', async () => {})
-  
+
   describe.sequential('must be sequential', () => {
     test('step 1', async () => {})
     test('step 2', async () => {})
@@ -105,7 +105,7 @@ describe.concurrent('parallel', () => {
 })
 ```
 
-### Shuffle Tests
+### テスト順序のシャッフル
 
 ```ts
 describe.shuffle('random order', () => {
@@ -114,11 +114,11 @@ describe.shuffle('random order', () => {
   test('test 3', () => {})
 })
 
-// Or with option
+// オプションで指定する場合
 describe('random', { shuffle: true }, () => {})
 ```
 
-## Parameterized Suites
+## パラメータ化スイート
 
 ### describe.each
 
@@ -146,7 +146,7 @@ describe.for([
 })
 ```
 
-## Hooks in Suites
+## スイート内のフック
 
 ```ts
 describe('Database', () => {
@@ -171,9 +171,9 @@ describe('Database', () => {
 })
 ```
 
-## Modifier Combinations
+## 修飾子の組み合わせ
 
-All modifiers can be chained:
+すべての修飾子をチェーンできる:
 
 ```ts
 describe.skip.concurrent('skipped concurrent', () => {})
@@ -181,15 +181,15 @@ describe.only.shuffle('only and shuffled', () => {})
 describe.concurrent.skip('equivalent', () => {})
 ```
 
-## Key Points
+## 重要ポイント
 
-- Top-level tests belong to an implicit file suite
-- Nested suites inherit parent's options (timeout, retry, etc.)
-- Hooks are scoped to their suite and nested suites
-- Use `describe.concurrent` with context's `expect` for snapshots
-- Shuffle order depends on `sequence.seed` config
+- トップレベルのテストは暗黙的なファイルスイートに属する
+- ネストされたスイートは親のオプション（timeout、retry 等）を継承する
+- フックは所属するスイートとネストされたスイートにスコープされる
+- `describe.concurrent` ではスナップショット用にコンテキストの `expect` を使用する
+- シャッフル順序は `sequence.seed` 設定に依存する
 
-<!-- 
+<!--
 Source references:
 - https://vitest.dev/api/describe.html
 -->

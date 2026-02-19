@@ -1,13 +1,13 @@
 ---
 name: vitest-configuration
-description: Configure Vitest with vite.config.ts or vitest.config.ts
+description: vitest.config.ts または vite.config.ts による Vitest の設定
 ---
 
-# Configuration
+# 設定
 
-Vitest reads configuration from `vitest.config.ts` or `vite.config.ts`. It shares the same config format as Vite.
+Vitest は `vitest.config.ts` または `vite.config.ts` から設定を読み込む。Vite と同じ設定フォーマットを共有する。
 
-## Basic Setup
+## 基本セットアップ
 
 ```ts
 // vitest.config.ts
@@ -15,14 +15,14 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    // test options
+    // テストオプション
   },
 })
 ```
 
-## Using with Existing Vite Config
+## 既存の Vite 設定との併用
 
-Add Vitest types reference and use the `test` property:
+Vitest の型参照を追加し、`test` プロパティを使用する:
 
 ```ts
 // vite.config.ts
@@ -37,9 +37,9 @@ export default defineConfig({
 })
 ```
 
-## Merging Configs
+## 設定のマージ
 
-If you have separate config files, use `mergeConfig`:
+設定ファイルを分離している場合は `mergeConfig` を使用する:
 
 ```ts
 // vitest.config.ts
@@ -53,83 +53,83 @@ export default mergeConfig(viteConfig, defineConfig({
 }))
 ```
 
-## Common Options
+## 主要オプション
 
 ```ts
 defineConfig({
   test: {
-    // Enable global APIs (describe, it, expect) without imports
+    // グローバル API（describe, it, expect）をインポートなしで使用可能にする
     globals: true,
-    
-    // Test environment: 'node', 'jsdom', 'happy-dom'
+
+    // テスト環境: 'node', 'jsdom', 'happy-dom'
     environment: 'node',
-    
-    // Setup files to run before each test file
+
+    // 各テストファイルの前に実行するセットアップファイル
     setupFiles: ['./tests/setup.ts'],
-    
-    // Include patterns for test files
+
+    // テストファイルの include パターン
     include: ['**/*.{test,spec}.{js,ts,jsx,tsx}'],
-    
-    // Exclude patterns
+
+    // exclude パターン
     exclude: ['**/node_modules/**', '**/dist/**'],
-    
-    // Test timeout in ms
+
+    // テストのタイムアウト（ミリ秒）
     testTimeout: 5000,
-    
-    // Hook timeout in ms
+
+    // フックのタイムアウト（ミリ秒）
     hookTimeout: 10000,
-    
-    // Enable watch mode by default
+
+    // デフォルトでウォッチモードを有効にする
     watch: true,
-    
-    // Coverage configuration
+
+    // カバレッジ設定
     coverage: {
-      provider: 'v8', // or 'istanbul'
+      provider: 'v8', // または 'istanbul'
       reporter: ['text', 'html'],
       include: ['src/**/*.ts'],
     },
-    
-    // Run tests in isolation (each file in separate process)
+
+    // テストを分離して実行（各ファイルを別プロセスで実行）
     isolate: true,
-    
-    // Pool for running tests: 'threads', 'forks', 'vmThreads'
+
+    // テスト実行プール: 'threads', 'forks', 'vmThreads'
     pool: 'threads',
 
-    // Number of workers (4.0: maxThreads/maxForks は廃止 → maxWorkers に統合)
+    // ワーカー数（4.0: maxThreads/maxForks は廃止 → maxWorkers に統合）
     maxWorkers: 4,
     minWorkers: 1,
-    
-    // Automatically clear mocks between tests
+
+    // テスト間でモックを自動クリアする
     clearMocks: true,
-    
-    // Restore mocks between tests
+
+    // テスト間でモックを自動リストアする
     restoreMocks: true,
-    
-    // Retry failed tests
+
+    // 失敗したテストのリトライ回数
     retry: 0,
-    
-    // Stop after first failure
+
+    // 最初の失敗で停止する
     bail: 0,
   },
 })
 ```
 
-## Conditional Configuration
+## 条件付き設定
 
-Use `mode` or `process.env.VITEST` for test-specific config:
+`mode` または `process.env.VITEST` でテスト固有の設定を行う:
 
 ```ts
 export default defineConfig(({ mode }) => ({
   plugins: mode === 'test' ? [] : [myPlugin()],
   test: {
-    // test options
+    // テストオプション
   },
 }))
 ```
 
-## Projects (Monorepos)
+## プロジェクト（モノレポ）
 
-Run different configurations in the same Vitest process:
+同一の Vitest プロセスで異なる設定を実行する:
 
 ```ts
 defineConfig({
@@ -169,17 +169,17 @@ defineConfig({
 | `coverage.ignoreEmptyLines` | 削除 |
 | `deps.external` / `deps.inline` | `server.deps` を使用 |
 
-## Key Points
+## 重要ポイント
 
-- Vitest uses Vite's transformation pipeline - same `resolve.alias`, plugins work
-- `vitest.config.ts` takes priority over `vite.config.ts`
-- Use `--config` flag to specify a custom config path
-- `process.env.VITEST` is set to `true` when running tests
-- Test config uses `test` property, rest is Vite config
+- Vitest は Vite の変換パイプラインを使用する — 同じ `resolve.alias` やプラグインが機能する
+- `vitest.config.ts` は `vite.config.ts` より優先される
+- `--config` フラグでカスタム設定パスを指定可能
+- テスト実行時は `process.env.VITEST` が `true` に設定される
+- テスト設定は `test` プロパティに記述し、それ以外は Vite の設定
 - 4.0: Vite ModuleRunner を使用（vite-node を廃止）
 - 4.0: `vitest.workspace.js` は使用不可 → `projects` を `vitest.config.ts` 内に記述
 
-<!-- 
+<!--
 Source references:
 - https://vitest.dev/guide/#configuring-vitest
 - https://vitest.dev/config/

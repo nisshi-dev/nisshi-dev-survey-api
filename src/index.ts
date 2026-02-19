@@ -4,10 +4,12 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { openAPIRouteHandler } from "hono-openapi";
 import type { PrismaClient } from "./generated/prisma/client.js";
+import type { Auth } from "./lib/auth.js";
 import { isAllowedOrigin } from "./lib/cors.js";
 import withPrisma from "./lib/prisma.js";
 import { adminAuth } from "./middleware/admin-auth.js";
 import { apiKeyAuth } from "./middleware/api-key-auth.js";
+import { withAuth } from "./middleware/with-auth.js";
 import adminAuthRoutes from "./routes/admin/auth.js";
 import adminSurveys from "./routes/admin/surveys.js";
 import dataSurveys from "./routes/data/surveys.js";
@@ -15,7 +17,11 @@ import survey from "./routes/survey.js";
 
 interface Bindings {
   ALLOWED_ORIGINS: string;
+  BETTER_AUTH_SECRET: string;
+  BETTER_AUTH_URL: string;
   DATABASE_URL: string;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
   NISSHI_DEV_SURVEY_API_KEY: string;
   RESEND_API_KEY: string;
   RESEND_FROM_EMAIL: string;
@@ -25,6 +31,7 @@ export interface HonoEnv {
   Bindings: Bindings;
   Variables: {
     prisma: PrismaClient;
+    auth: Auth;
     user: { id: string; email: string };
   };
 }
@@ -73,6 +80,7 @@ app.get(
 app.get("/ui", swaggerUI({ url: "/doc" }));
 
 app.use("*", withPrisma);
+app.use("*", withAuth);
 app.use("*", logger());
 
 // 回答者向け API（認証不要）

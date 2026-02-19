@@ -1,45 +1,45 @@
 ---
 name: lifecycle-hooks
-description: beforeEach, afterEach, beforeAll, afterAll, and around hooks
+description: beforeEach、afterEach、beforeAll、afterAll、および around フック
 ---
 
-# Lifecycle Hooks
+# ライフサイクルフック
 
-## Basic Hooks
+## 基本フック
 
 ```ts
 import { afterAll, afterEach, beforeAll, beforeEach, test } from 'vitest'
 
 beforeAll(async () => {
-  // Runs once before all tests in file/suite
+  // ファイル/スイート内のすべてのテストの前に1回実行
   await setupDatabase()
 })
 
 afterAll(async () => {
-  // Runs once after all tests in file/suite
+  // ファイル/スイート内のすべてのテストの後に1回実行
   await teardownDatabase()
 })
 
 beforeEach(async () => {
-  // Runs before each test
+  // 各テストの前に実行
   await clearTestData()
 })
 
 afterEach(async () => {
-  // Runs after each test
+  // 各テストの後に実行
   await cleanupMocks()
 })
 ```
 
-## Cleanup Return Pattern
+## クリーンアップの return パターン
 
-Return cleanup function from `before*` hooks:
+`before*` フックからクリーンアップ関数を返す:
 
 ```ts
 beforeAll(async () => {
   const server = await startServer()
-  
-  // Returned function runs as afterAll
+
+  // 返された関数は afterAll として実行される
   return async () => {
     await server.close()
   }
@@ -47,75 +47,75 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   const connection = await connect()
-  
-  // Runs as afterEach
+
+  // afterEach として実行される
   return () => connection.close()
 })
 ```
 
-## Scoped Hooks
+## スコープ付きフック
 
-Hooks apply to current suite and nested suites:
+フックは現在のスイートとネストされたスイートに適用される:
 
 ```ts
 describe('outer', () => {
   beforeEach(() => console.log('outer before'))
-  
+
   test('test 1', () => {}) // outer before → test
-  
+
   describe('inner', () => {
     beforeEach(() => console.log('inner before'))
-    
+
     test('test 2', () => {}) // outer before → inner before → test
   })
 })
 ```
 
-## Hook Timeout
+## フックのタイムアウト
 
 ```ts
 beforeAll(async () => {
   await slowSetup()
-}, 30_000) // 30 second timeout
+}, 30_000) // 30秒のタイムアウト
 ```
 
-## Around Hooks
+## Around フック
 
-Wrap tests with setup/teardown context:
+テストをセットアップ/テアダウンのコンテキストでラップする:
 
 ```ts
 import { aroundEach, test } from 'vitest'
 
-// Wrap each test in database transaction
+// 各テストをデータベーストランザクションでラップ
 aroundEach(async (runTest) => {
   await db.beginTransaction()
-  await runTest() // Must be called!
+  await runTest() // 必ず呼び出すこと！
   await db.rollback()
 })
 
 test('insert user', async () => {
   await db.insert({ name: 'Alice' })
-  // Automatically rolled back after test
+  // テスト後に自動的にロールバックされる
 })
 ```
 
 ### aroundAll
 
-Wrap entire suite:
+スイート全体をラップする:
 
 ```ts
 import { aroundAll, test } from 'vitest'
 
 aroundAll(async (runSuite) => {
   console.log('before all tests')
-  await runSuite() // Must be called!
+  await runSuite() // 必ず呼び出すこと！
   console.log('after all tests')
 })
 ```
 
-### Multiple Around Hooks
+### 複数の Around フック
 
-Nested like onion layers:
+オニオンレイヤーのようにネストされる:
 
 ```ts
 aroundEach(async (runTest) => {
@@ -130,32 +130,32 @@ aroundEach(async (runTest) => {
   console.log('inner after')
 })
 
-// Order: outer before → inner before → test → inner after → outer after
+// 実行順: outer before → inner before → test → inner after → outer after
 ```
 
-## Test Hooks
+## テスト内フック
 
-Inside test body:
+テスト本体内で使用する:
 
 ```ts
 import { onTestFailed, onTestFinished, test } from 'vitest'
 
 test('with cleanup', () => {
   const db = connect()
-  
-  // Runs after test finishes (pass or fail)
+
+  // テスト終了後に実行される（パス・失敗を問わず）
   onTestFinished(() => db.close())
-  
-  // Only runs if test fails
+
+  // テストが失敗した場合のみ実行される
   onTestFailed(({ task }) => {
     console.log('Failed:', task.result?.errors)
   })
-  
+
   db.query('SELECT * FROM users')
 })
 ```
 
-### Reusable Cleanup Pattern
+### 再利用可能なクリーンアップパターン
 
 ```ts
 function useTestDb() {
@@ -170,14 +170,14 @@ test('query users', () => {
 })
 
 test('query orders', () => {
-  const db = useTestDb() // Fresh connection, auto-closed
+  const db = useTestDb() // 新しいコネクション、自動クローズ
   expect(db.query('SELECT * FROM orders')).toBeDefined()
 })
 ```
 
-## Concurrent Test Hooks
+## 並行テストのフック
 
-For concurrent tests, use context's hooks:
+並行テストではコンテキストのフックを使用する:
 
 ```ts
 test.concurrent('concurrent', ({ onTestFinished }) => {
@@ -186,9 +186,9 @@ test.concurrent('concurrent', ({ onTestFinished }) => {
 })
 ```
 
-## Extended Test Hooks
+## 拡張テストのフック
 
-With `test.extend`, hooks are type-aware:
+`test.extend` を使用すると、フックは型を認識する:
 
 ```ts
 const test = base.extend<{ db: Database }>({
@@ -199,7 +199,7 @@ const test = base.extend<{ db: Database }>({
   },
 })
 
-// These hooks know about `db` fixture
+// これらのフックは `db` フィクスチャを認識する
 test.beforeEach(({ db }) => {
   db.seed()
 })
@@ -209,36 +209,36 @@ test.afterEach(({ db }) => {
 })
 ```
 
-## Hook Execution Order
+## フックの実行順序
 
-Default order (stack):
-1. `beforeAll` (in order)
-2. `beforeEach` (in order)
-3. Test
-4. `afterEach` (reverse order)
-5. `afterAll` (reverse order)
+デフォルトの順序（stack）:
+1. `beforeAll`（定義順）
+2. `beforeEach`（定義順）
+3. テスト
+4. `afterEach`（逆順）
+5. `afterAll`（逆順）
 
-Configure with `sequence.hooks`:
+`sequence.hooks` で設定する:
 
 ```ts
 defineConfig({
   test: {
     sequence: {
-      hooks: 'list', // 'stack' (default), 'list', 'parallel'
+      hooks: 'list', // 'stack'（デフォルト）, 'list', 'parallel'
     },
   },
 })
 ```
 
-## Key Points
+## 重要ポイント
 
-- Hooks are not called during type checking
-- Return cleanup function from `before*` to avoid `after*` duplication
-- `aroundEach`/`aroundAll` must call `runTest()`/`runSuite()`
-- `onTestFinished` always runs, even if test fails
-- Use context hooks for concurrent tests
+- 型チェック中はフックは呼び出されない
+- `before*` からクリーンアップ関数を返すことで `after*` の重複を避ける
+- `aroundEach`/`aroundAll` では `runTest()`/`runSuite()` を必ず呼び出す
+- `onTestFinished` はテストが失敗しても常に実行される
+- 並行テストではコンテキストのフックを使用する
 
-<!-- 
+<!--
 Source references:
 - https://vitest.dev/api/hooks.html
 -->

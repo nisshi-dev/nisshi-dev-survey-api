@@ -1,38 +1,38 @@
 ---
 name: mocking
-description: Mock functions, modules, timers, and dates with vi utilities
+description: vi ユーティリティによる関数・モジュール・タイマー・日付のモック
 ---
 
-# Mocking
+# モック
 
-## Mock Functions
+## モック関数
 
 ```ts
 import { expect, vi } from 'vitest'
 
-// Create mock function
+// モック関数の作成
 const fn = vi.fn()
 fn('hello')
 
 expect(fn).toHaveBeenCalled()
 expect(fn).toHaveBeenCalledWith('hello')
 
-// With implementation
+// 実装付きモック
 const add = vi.fn((a, b) => a + b)
 expect(add(1, 2)).toBe(3)
 
-// Mock return values
+// 戻り値のモック
 fn.mockReturnValue(42)
 fn.mockReturnValueOnce(1).mockReturnValueOnce(2)
 fn.mockResolvedValue({ data: true })
 fn.mockRejectedValue(new Error('fail'))
 
-// Mock implementation
+// 実装のモック
 fn.mockImplementation((x) => x * 2)
 fn.mockImplementationOnce(() => 'first call')
 ```
 
-## Spying on Objects
+## オブジェクトのスパイ
 
 ```ts
 const cart = {
@@ -44,30 +44,30 @@ cart.getTotal()
 
 expect(spy).toHaveBeenCalled()
 
-// Mock implementation
+// 実装のモック
 spy.mockReturnValue(200)
 expect(cart.getTotal()).toBe(200)
 
-// Restore original
+// オリジナルを復元
 spy.mockRestore()
 ```
 
-## Module Mocking
+## モジュールのモック
 
 ```ts
-// vi.mock is hoisted to top of file
+// vi.mock はファイルの先頭に巻き上げられる
 vi.mock('./api', () => ({
   fetchUser: vi.fn(() => ({ id: 1, name: 'Mock' })),
 }))
 
 import { fetchUser } from './api'
 
-test('mocked module', () => {
+test('モックされたモジュール', () => {
   expect(fetchUser()).toEqual({ id: 1, name: 'Mock' })
 })
 ```
 
-### Partial Mock
+### 部分モック
 
 ```ts
 vi.mock('./utils', async (importOriginal) => {
@@ -79,57 +79,57 @@ vi.mock('./utils', async (importOriginal) => {
 })
 ```
 
-### Auto-mock with Spy
+### スパイ付き自動モック
 
 ```ts
-// Keep implementation but spy on calls
+// 実装はそのままに呼び出しを監視
 vi.mock('./calculator', { spy: true })
 
 import { add } from './calculator'
 
-test('spy on module', () => {
-  const result = add(1, 2) // Real implementation
+test('モジュールのスパイ', () => {
+  const result = add(1, 2) // 実際の実装が実行される
   expect(result).toBe(3)
   expect(add).toHaveBeenCalledWith(1, 2)
 })
 ```
 
-### Manual Mocks (__mocks__)
+### 手動モック (__mocks__)
 
 ```
 src/
   __mocks__/
-    axios.ts      # Mocks 'axios'
+    axios.ts      # 'axios' のモック
   api/
     __mocks__/
-      client.ts   # Mocks './client'
+      client.ts   # './client' のモック
     client.ts
 ```
 
 ```ts
-// Just call vi.mock with no factory
+// ファクトリなしで vi.mock を呼ぶだけ
 vi.mock('axios')
 vi.mock('./api/client')
 ```
 
-## Dynamic Mocking (vi.doMock)
+## 動的モック (vi.doMock)
 
-Not hoisted - use for dynamic imports:
+巻き上げされない — 動的インポートに使用:
 
 ```ts
-test('dynamic mock', async () => {
+test('動的モック', async () => {
   vi.doMock('./config', () => ({
     apiUrl: 'http://test.local',
   }))
-  
+
   const { apiUrl } = await import('./config')
   expect(apiUrl).toBe('http://test.local')
-  
+
   vi.doUnmock('./config')
 })
 ```
 
-## Mock Timers
+## タイマーのモック
 
 ```ts
 import { afterEach, beforeEach, vi } from 'vitest'
@@ -142,63 +142,63 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-test('timers', () => {
+test('タイマー', () => {
   const fn = vi.fn()
   setTimeout(fn, 1000)
-  
+
   expect(fn).not.toHaveBeenCalled()
-  
+
   vi.advanceTimersByTime(1000)
   expect(fn).toHaveBeenCalled()
 })
 
-// Other timer methods
-vi.runAllTimers()           // Run all pending timers
-vi.runOnlyPendingTimers()   // Run only currently pending
-vi.advanceTimersToNextTimer() // Advance to next timer
+// その他のタイマーメソッド
+vi.runAllTimers()           // すべての保留中タイマーを実行
+vi.runOnlyPendingTimers()   // 現在保留中のもののみ実行
+vi.advanceTimersToNextTimer() // 次のタイマーまで進める
 ```
 
-### Async Timer Methods
+### 非同期タイマーメソッド
 
 ```ts
-test('async timers', async () => {
+test('非同期タイマー', async () => {
   vi.useFakeTimers()
-  
+
   let resolved = false
   setTimeout(() => Promise.resolve().then(() => { resolved = true }), 100)
-  
+
   await vi.advanceTimersByTimeAsync(100)
   expect(resolved).toBe(true)
 })
 ```
 
-## Mock Dates
+## 日付のモック
 
 ```ts
 vi.setSystemTime(new Date('2024-01-01'))
 expect(new Date().getFullYear()).toBe(2024)
 
-vi.useRealTimers() // Restore
+vi.useRealTimers() // 復元
 ```
 
-## Mock Globals
+## グローバルのモック
 
 ```ts
-vi.stubGlobal('fetch', vi.fn(() => 
+vi.stubGlobal('fetch', vi.fn(() =>
   Promise.resolve({ json: () => ({ data: 'mock' }) })
 ))
 
-// Restore
+// 復元
 vi.unstubAllGlobals()
 ```
 
-## Mock Environment Variables
+## 環境変数のモック
 
 ```ts
 vi.stubEnv('API_KEY', 'test-key')
 expect(import.meta.env.API_KEY).toBe('test-key')
 
-// Restore
+// 復元
 vi.unstubAllEnvs()
 ```
 
@@ -221,38 +221,38 @@ const req = new Request('https://example.com')
 expect(globalThis.Request).toHaveBeenCalledWith('https://example.com')
 ```
 
-## Clearing Mocks
+## モックのクリア
 
 ```ts
 const fn = vi.fn()
 fn()
 
-fn.mockClear()       // Clear call history
-fn.mockReset()       // Clear history + implementation
-fn.mockRestore()     // Restore original (for spies)
+fn.mockClear()       // 呼び出し履歴をクリア
+fn.mockReset()       // 履歴 + 実装をクリア
+fn.mockRestore()     // オリジナルを復元（スパイ用）
 
-// Global
+// グローバル
 vi.clearAllMocks()
 vi.resetAllMocks()
 vi.restoreAllMocks() // 4.0: vi.spyOn で作成したスパイのみ対象（vi.fn は対象外）
 ```
 
-## Config Auto-Reset
+## 設定による自動リセット
 
 ```ts
 // vitest.config.ts
 defineConfig({
   test: {
-    clearMocks: true,    // Clear before each test
-    mockReset: true,     // Reset before each test
-    restoreMocks: true,  // Restore after each test
-    unstubEnvs: true,    // Restore env vars
-    unstubGlobals: true, // Restore globals
+    clearMocks: true,    // 各テスト前にクリア
+    mockReset: true,     // 各テスト前にリセット
+    restoreMocks: true,  // 各テスト後に復元
+    unstubEnvs: true,    // 環境変数を復元
+    unstubGlobals: true, // グローバルを復元
   },
 })
 ```
 
-## Hoisted Variables for Mocks
+## モック用の巻き上げ変数
 
 ```ts
 const mockFn = vi.hoisted(() => vi.fn())
@@ -263,26 +263,26 @@ vi.mock('./module', () => ({
 
 import { getData } from './module'
 
-test('hoisted mock', () => {
+test('巻き上げモック', () => {
   mockFn.mockReturnValue('test')
   expect(getData()).toBe('test')
 })
 ```
 
-## Key Points
+## 重要ポイント
 
-- `vi.mock` is hoisted - called before imports
-- Use `vi.doMock` for dynamic, non-hoisted mocking
-- Always restore mocks to avoid test pollution
-- Use `{ spy: true }` to keep implementation but track calls
-- `vi.hoisted` lets you reference variables in mock factories
+- `vi.mock` は巻き上げされる — インポートより先に呼ばれる
+- 動的な非巻き上げモックには `vi.doMock` を使用
+- テスト汚染を防ぐため、モックは必ず復元する
+- `{ spy: true }` で実装を保持しつつ呼び出しを追跡
+- `vi.hoisted` でモックファクトリ内の変数を参照可能
 - 4.0: `vi.fn().getMockName()` のデフォルト値が `"spy"` → `""（空文字列）` に変更
 - 4.0: `vi.restoreAllMocks()` は `vi.spyOn` で作成したスパイのみ復元（`vi.fn` は対象外）
 - 4.0: `mock.invocationCallOrder` が 1 始まり（3.x では 0 始まり）
 - 4.0: `mock.settledResults` が呼び出し直後に `{ type: 'incomplete' }` で即座に populate
 - 4.0: `vi.fn` / `vi.spyOn` でコンストラクタ呼び出しの監視をサポート
 
-<!-- 
+<!--
 Source references:
 - https://vitest.dev/guide/mocking.html
 - https://vitest.dev/api/vi.html

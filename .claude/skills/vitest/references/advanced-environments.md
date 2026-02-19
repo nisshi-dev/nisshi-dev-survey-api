@@ -1,26 +1,26 @@
 ---
 name: test-environments
-description: Configure environments like jsdom, happy-dom for browser APIs
+description: jsdom、happy-dom 等のブラウザ API 向けテスト環境の設定
 ---
 
-# Test Environments
+# テスト環境
 
-## Available Environments
+## 利用可能な環境
 
-- `node` (default) - Node.js environment
-- `jsdom` - Browser-like with DOM APIs
-- `happy-dom` - Faster alternative to jsdom
+- `node`（デフォルト）- Node.js 環境
+- `jsdom` - DOM API を備えたブラウザライクな環境
+- `happy-dom` - jsdom より高速な代替
 - `edge-runtime` - Vercel Edge Runtime
 
-## Configuration
+## 設定
 
 ```ts
 // vitest.config.ts
 defineConfig({
   test: {
     environment: 'jsdom',
-    
-    // Environment-specific options
+
+    // 環境固有のオプション
     environmentOptions: {
       jsdom: {
         url: 'http://localhost',
@@ -30,54 +30,54 @@ defineConfig({
 })
 ```
 
-## Installing Environment Packages
+## 環境パッケージのインストール
 
 ```bash
 # jsdom
 npm i -D jsdom
 
-# happy-dom (faster, fewer APIs)
+# happy-dom（高速だが API は少ない）
 npm i -D happy-dom
 ```
 
-## Per-File Environment
+## ファイル単位の環境指定
 
-Use magic comment at top of file:
+ファイル先頭にマジックコメントを記述:
 
 ```ts
 // @vitest-environment jsdom
 
 import { expect, test } from 'vitest'
 
-test('DOM test', () => {
+test('DOM テスト', () => {
   const div = document.createElement('div')
   expect(div).toBeInstanceOf(HTMLDivElement)
 })
 ```
 
-## jsdom Environment
+## jsdom 環境
 
-Full browser environment simulation:
+フルブラウザ環境のシミュレーション:
 
 ```ts
 // @vitest-environment jsdom
 
-test('DOM manipulation', () => {
+test('DOM 操作', () => {
   document.body.innerHTML = '<div id="app"></div>'
-  
+
   const app = document.getElementById('app')
   app.textContent = 'Hello'
-  
+
   expect(app.textContent).toBe('Hello')
 })
 
-test('window APIs', () => {
+test('window API', () => {
   expect(window.location.href).toBeDefined()
   expect(localStorage).toBeDefined()
 })
 ```
 
-### jsdom Options
+### jsdom オプション
 
 ```ts
 defineConfig({
@@ -94,23 +94,23 @@ defineConfig({
 })
 ```
 
-## happy-dom Environment
+## happy-dom 環境
 
-Faster but fewer APIs:
+高速だが API は少ない:
 
 ```ts
 // @vitest-environment happy-dom
 
-test('basic DOM', () => {
+test('基本的な DOM', () => {
   const el = document.createElement('div')
   el.className = 'test'
   expect(el.className).toBe('test')
 })
 ```
 
-## Multiple Environments per Project
+## プロジェクトごとの複数環境
 
-Use projects for different environments:
+異なる環境にはプロジェクトを使用:
 
 ```ts
 defineConfig({
@@ -135,9 +135,9 @@ defineConfig({
 })
 ```
 
-## Custom Environment
+## カスタム環境
 
-Create custom environment package:
+カスタム環境パッケージの作成:
 
 ```ts
 // vitest-environment-custom/index.ts
@@ -145,12 +145,12 @@ import type { Environment } from 'vitest/runtime'
 
 export default <Environment>{
   name: 'custom',
-  viteEnvironment: 'ssr', // or 'client'
-  
+  viteEnvironment: 'ssr', // または 'client'
+
   setup() {
-    // Setup global state
+    // グローバル状態のセットアップ
     globalThis.myGlobal = 'value'
-    
+
     return {
       teardown() {
         delete globalThis.myGlobal
@@ -160,7 +160,7 @@ export default <Environment>{
 }
 ```
 
-Use with:
+使用方法:
 
 ```ts
 defineConfig({
@@ -170,19 +170,19 @@ defineConfig({
 })
 ```
 
-## Environment with VM
+## VM を使った環境
 
-For full isolation:
+完全な分離が必要な場合:
 
 ```ts
 export default <Environment>{
   name: 'isolated',
   viteEnvironment: 'ssr',
-  
+
   async setupVM() {
     const vm = await import('node:vm')
     const context = vm.createContext()
-    
+
     return {
       getVmContext() {
         return context
@@ -190,14 +190,14 @@ export default <Environment>{
       teardown() {},
     }
   },
-  
+
   setup() {
     return { teardown() {} }
   },
 }
 ```
 
-## Browser Mode（4.0 で安定版に昇格）
+## ブラウザモード（4.0 で安定版に昇格）
 
 jsdom/happy-dom ではなく実ブラウザでテストを実行する。4.0 で安定版 API となり、`vitest/browser` からインポート可能。
 
@@ -207,7 +207,7 @@ defineConfig({
   test: {
     browser: {
       enabled: true,
-      provider: 'playwright', // or 'webdriverio'
+      provider: 'playwright', // または 'webdriverio'
       // 4.0: name → instances に変更（複数ブラウザ対応）
       instances: [
         { browser: 'chromium' },
@@ -223,22 +223,22 @@ defineConfig({
 // テストファイル内（4.0: vitest/browser からインポート）
 import { page, userEvent } from 'vitest/browser'
 
-test('click button', async () => {
+test('ボタンクリック', async () => {
   await page.render(<MyComponent />)
   await userEvent.click(page.getByRole('button'))
 })
 ```
 
-## CSS and Assets
+## CSS とアセット
 
-In jsdom/happy-dom, configure CSS handling:
+jsdom/happy-dom での CSS ハンドリング設定:
 
 ```ts
 defineConfig({
   test: {
-    css: true, // Process CSS
-    
-    // Or with options
+    css: true, // CSS を処理
+
+    // またはオプション指定
     css: {
       include: /\.module\.css$/,
       modules: {
@@ -249,9 +249,9 @@ defineConfig({
 })
 ```
 
-## Fixing External Dependencies
+## 外部依存関係の問題解決
 
-If external deps fail with CSS/asset errors:
+外部パッケージが CSS/アセットのエラーで失敗する場合:
 
 ```ts
 defineConfig({
@@ -265,18 +265,18 @@ defineConfig({
 })
 ```
 
-## Key Points
+## ポイント
 
-- Default is `node` - no browser APIs
-- Use `jsdom` for full browser simulation
-- Use `happy-dom` for faster tests with basic DOM
-- Per-file environment via `// @vitest-environment` comment
-- Use projects for multiple environment configurations
-- 4.0: Browser Mode が安定版に。`vitest/browser` からユーティリティをインポート
+- デフォルトは `node` - ブラウザ API は使用不可
+- フルブラウザシミュレーションには `jsdom` を使用
+- 基本的な DOM で高速なテストには `happy-dom` を使用
+- `// @vitest-environment` コメントでファイル単位の環境指定が可能
+- 複数環境の設定にはプロジェクトを使用
+- 4.0: ブラウザモードが安定版に。`vitest/browser` からユーティリティをインポート
 - 4.0: `browser.name` → `browser.instances` に変更（複数ブラウザ対応）
 - 4.0: `deps.external` / `deps.inline` → `server.deps` に移行
 
-<!-- 
+<!--
 Source references:
 - https://vitest.dev/guide/environment.html
 -->

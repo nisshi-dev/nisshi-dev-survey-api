@@ -6,7 +6,8 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "ALLOWED_ORIGINS": "https://survey.nisshi.dev,https://nisshi-dev-survey-*.vercel.app",
-    "RESEND_FROM_EMAIL": "nisshi-dev <work@nisshi.dev>"
+    "RESEND_FROM_EMAIL": "nisshi-dev <work@nisshi.dev>",
+    "BETTER_AUTH_URL": "https://nisshi-dev-survey-api.nisshi.workers.dev"
   },
   "observability": {
     "enabled": true

@@ -18,6 +18,7 @@
 | バックエンド | Hono | REST API サーバー |
 | バリデーション | Valibot | スキーマベースの型安全なバリデーション・型ガード（SSoT） |
 | API ドキュメント | hono-openapi + @hono/swagger-ui | Valibot スキーマから OpenAPI 3.1 自動生成 + Swagger UI |
+| 認証 | better-auth | Google OAuth、セッション管理、メール許可リスト |
 | DB | Prisma Postgres + Prisma ORM 7 | マネージド PostgreSQL（`@prisma/adapter-pg` で直接接続） |
 | メール送信 | Resend | 回答コピーメールのトランザクショナル送信 |
 | テスト | Vitest 4.x | TDD ベースのユニットテスト |
@@ -56,9 +57,8 @@ scripts/
 
 | メソッド | パス | 説明 |
 |---|---|---|
-| POST | `/api/admin/auth/login` | ログイン |
-| POST | `/api/admin/auth/logout` | ログアウト |
-| GET | `/api/admin/auth/me` | セッション確認 |
+| GET | `/api/admin/auth/me` | セッション確認（後方互換） |
+| GET/POST | `/api/admin/auth/*` | better-auth 認証エンドポイント（Google OAuth フロー等） |
 | GET | `/api/admin/surveys` | アンケート一覧 |
 | POST | `/api/admin/surveys` | アンケート作成 |
 | GET | `/api/admin/surveys/:id` | アンケート詳細 |
@@ -91,21 +91,25 @@ scripts/
 
 ## 認証フロー
 
-```
-ブラウザ → POST /api/admin/auth/login (email, password)
-  → サーバー: AdminUser 検索 → scrypt でパスワード検証
-  → 成功: Session レコード作成 → Set-Cookie: session=<sessionId> (HttpOnly, Secure, SameSite=None)
-  → 失敗: 401 { error: "Invalid email or password" }
+better-auth ライブラリを使用した Google OAuth 認証。
 
-ブラウザ → GET /api/admin/surveys/* (Cookie: session=<sessionId>)
-  → adminAuth ミドルウェア: Session 検索 → 期限チェック → c.set("user", { id, email })
-  → 有効: next() → ルートハンドラ実行
-  → 無効/なし: 401 { error: "Unauthorized" }
+```
+1. ブラウザ → GET /api/admin/auth/sign-in/social (provider=google)
+   → better-auth: Google OAuth フローにリダイレクト
+   → Google 認証後、コールバックで better-auth がユーザー作成/ログイン処理
+   → databaseHooks: AllowedEmail テーブルで許可メールか検証（未登録なら拒否）
+   → 成功: Session + Cookie 設定
+
+2. ブラウザ → GET /api/admin/surveys/* (Cookie: better-auth セッション)
+   → adminAuth ミドルウェア: auth.api.getSession({ headers }) でセッション検証
+   → 有効: c.set("user", { id, email }) → next()
+   → 無効/なし: 401 { error: "Unauthorized" }
 ```
 
-- パスワードハッシュ: `node:crypto` の `scrypt`（salt 16 bytes + key 64 bytes、`hex:hex` 形式）
-- セッション有効期限: 7 日間
-- Cookie: `HttpOnly`, `Secure`（本番のみ）, `SameSite=None`（本番）/ `Lax`（ローカル）, `Path=/`
+- 認証ライブラリ: better-auth（Prisma アダプター + Google OAuth ソーシャルプロバイダー）
+- メール許可リスト: `AllowedEmail` テーブルに事前登録されたメールのみログイン可能
+- Cookie: `SameSite=None`, `Secure=true`（cross-origin 対応）
+- セッション管理: better-auth が自動管理（DB 保存）
 
 ## 環境変数
 
@@ -114,8 +118,11 @@ scripts/
 - `RESEND_API_KEY` — Resend API キー（回答コピーメール送信に使用）
 - `RESEND_FROM_EMAIL` — 送信元メールアドレス（未設定時は Resend サンドボックスの `onboarding@resend.dev`）
 - `NISSHI_DEV_SURVEY_API_KEY` — データ投入 API の認証キー（`X-API-Key` ヘッダーで送信）
-- `ADMIN_EMAIL` — 管理者ユーザーのメールアドレス（`db:seed` 用）
-- `ADMIN_PASSWORD` — 管理者ユーザーのパスワード（`db:seed` 用）
+- `GOOGLE_CLIENT_ID` — Google OAuth クライアント ID
+- `GOOGLE_CLIENT_SECRET` — Google OAuth クライアントシークレット
+- `BETTER_AUTH_SECRET` — better-auth の暗号化シークレット（最低 32 文字）
+- `BETTER_AUTH_URL` — better-auth のベース URL（例: `https://nisshi-dev-survey-api.nisshi.workers.dev`）
+- `ADMIN_EMAIL` — 許可メールアドレス（`db:seed` 用）
 
 ## Cloudflare Workers デプロイ
 

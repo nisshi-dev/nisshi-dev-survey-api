@@ -55,7 +55,7 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 - `npm run db:migrate` — マイグレーション作成・適用（開発用）
 - `npm run db:migrate:deploy` — マイグレーション適用のみ（本番/CI 用）
 - `npm run db:studio` — Prisma Studio 起動（ブラウザで DB を閲覧・編集）
-- `npm run db:seed` — 管理者ユーザー作成（`ADMIN_EMAIL`, `ADMIN_PASSWORD` 環境変数が必要）
+- `npm run db:seed` — 許可メールアドレス登録（`ADMIN_EMAIL` 環境変数が必要）
 
 ### コード生成
 
@@ -68,14 +68,17 @@ nisshi-dev Survey の API サーバー。Hono + Prisma + Valibot で実装。
 - `RESEND_API_KEY` — Resend API キー（回答コピーメール送信に使用）
 - `RESEND_FROM_EMAIL` — 送信元メールアドレス
 - `NISSHI_DEV_SURVEY_API_KEY` — データ投入 API の認証キー
-- `ADMIN_EMAIL` — 管理者ユーザーのメールアドレス（`db:seed` 用）
-- `ADMIN_PASSWORD` — 管理者ユーザーのパスワード（`db:seed` 用）
+- `GOOGLE_CLIENT_ID` — Google OAuth クライアント ID
+- `GOOGLE_CLIENT_SECRET` — Google OAuth クライアントシークレット
+- `BETTER_AUTH_SECRET` — better-auth の暗号化シークレット（最低 32 文字）
+- `BETTER_AUTH_URL` — better-auth のベース URL
+- `ADMIN_EMAIL` — 許可メールアドレス（`db:seed` 用）
 
 ## Cloudflare Workers デプロイ
 
 - `npm run deploy` — `wrangler deploy --minify` でデプロイ
-- シークレットは `wrangler secret put <NAME>` で設定（`DATABASE_URL`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `NISSHI_DEV_SURVEY_API_KEY`）
-- `ALLOWED_ORIGINS` と `RESEND_FROM_EMAIL` は `wrangler.jsonc` の `vars` で管理
+- シークレットは `wrangler secret put <NAME>` で設定（`DATABASE_URL`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `NISSHI_DEV_SURVEY_API_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BETTER_AUTH_SECRET`）
+- `ALLOWED_ORIGINS`, `RESEND_FROM_EMAIL`, `BETTER_AUTH_URL` は `wrangler.jsonc` の `vars` で管理
 - `nodejs_compat` フラグにより `node:crypto`, `node:net` 等の Node.js API を利用可能
 
 ## ドキュメント管理
