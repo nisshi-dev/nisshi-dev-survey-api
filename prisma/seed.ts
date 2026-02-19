@@ -1,4 +1,5 @@
-import pg from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../src/generated/prisma/client.js";
 
 const email = process.env.ADMIN_EMAIL;
 const databaseUrl = process.env.DATABASE_URL;
@@ -8,22 +9,15 @@ if (!(email && databaseUrl)) {
   process.exit(1);
 }
 
-const client = new pg.Client({ connectionString: databaseUrl });
-await client.connect();
+const adapter = new PrismaPg({ connectionString: databaseUrl });
+const prisma = new PrismaClient({ adapter });
 
-const { rows } = await client.query<{ id: string; email: string }>(
-  `INSERT INTO "AllowedEmail" (id, email, "createdAt")
-   VALUES (gen_random_uuid(), $1, NOW())
-   ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email
-   RETURNING id, email`,
-  [email]
-);
+const result = await prisma.allowedEmail.upsert({
+  where: { email },
+  update: {},
+  create: { email },
+});
 
-const result = rows[0];
-if (!result) {
-  console.error("Failed to upsert allowed email");
-  process.exit(1);
-}
 console.log(`Allowed email registered: ${result.email} (${result.id})`);
 
-await client.end();
+await prisma.$disconnect();
