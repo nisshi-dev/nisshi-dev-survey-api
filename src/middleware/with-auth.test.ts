@@ -10,17 +10,7 @@ vi.mock("@/lib/auth", () => ({
 const { withAuth } = await import("./with-auth");
 
 interface TestEnv {
-  Bindings: {
-    ALLOWED_ORIGINS: string;
-    BETTER_AUTH_SECRET: string;
-    BETTER_AUTH_URL: string;
-    DATABASE_URL: string;
-    GOOGLE_CLIENT_ID: string;
-    GOOGLE_CLIENT_SECRET: string;
-    NISSHI_DEV_SURVEY_API_KEY: string;
-    RESEND_API_KEY: string;
-    RESEND_FROM_EMAIL: string;
-  };
+  Bindings: Record<string, string>;
   Variables: {
     prisma: unknown;
     auth: unknown;
@@ -32,12 +22,8 @@ const testEnv = {
   ALLOWED_ORIGINS: "http://localhost:5173",
   BETTER_AUTH_SECRET: "test-secret",
   BETTER_AUTH_URL: "http://localhost:8787",
-  DATABASE_URL: "postgresql://localhost/test",
   GOOGLE_CLIENT_ID: "id",
   GOOGLE_CLIENT_SECRET: "secret",
-  NISSHI_DEV_SURVEY_API_KEY: "key",
-  RESEND_API_KEY: "re_test",
-  RESEND_FROM_EMAIL: "test@test.com",
 };
 
 describe("withAuth middleware", () => {

@@ -13,5 +13,7 @@ NISSHI_DEV_SURVEY_API_KEY="nisshi-dev-survey-api-key"
 GOOGLE_CLIENT_ID="your-google-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
-# better-auth（ランダムな32文字以上の文字列）
+# better-auth（openssl rand -base64 32 で生成）
 BETTER_AUTH_SECRET="your-random-secret-at-least-32-chars"
+BETTER_AUTH_URL="http://localhost:8787"
+ALLOWED_ORIGINS="http://localhost:5173"

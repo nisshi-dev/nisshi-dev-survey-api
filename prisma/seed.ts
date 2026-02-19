@@ -9,17 +9,15 @@ if (!(email && databaseUrl)) {
   process.exit(1);
 }
 
-const adapter = new PrismaPg({
-  connectionString: databaseUrl,
-});
+const adapter = new PrismaPg({ connectionString: databaseUrl });
 const prisma = new PrismaClient({ adapter });
 
-const allowed = await prisma.allowedEmail.upsert({
+const result = await prisma.allowedEmail.upsert({
   where: { email },
   update: {},
   create: { email },
 });
 
-console.log(`Allowed email registered: ${allowed.email} (${allowed.id})`);
+console.log(`Allowed email registered: ${result.email} (${result.id})`);
 
 await prisma.$disconnect();
