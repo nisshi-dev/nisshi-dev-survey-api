@@ -197,3 +197,7 @@ npm test               # ウォッチモードで起動
 |---|---|---|
 | [`nisshi-dev-survey`](https://github.com/nisshi-dev/nisshi-dev-survey) | survey.nisshi.dev | フロントエンド（Vite SPA） |
 | `nisshi-dev-survey-api` | nisshi-dev-survey-api.nisshi.workers.dev | API サーバー（本リポ） |
+
+## License
+
+[MIT](LICENSE)
