@@ -79,9 +79,9 @@ app.get(
 // Swagger UI
 app.get("/ui", swaggerUI({ url: "/doc" }));
 
+app.use("*", logger());
 app.use("*", withPrisma);
 app.use("*", withAuth);
-app.use("*", logger());
 
 // 回答者向け API（認証不要）
 app.route("/survey", survey);

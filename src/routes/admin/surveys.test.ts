@@ -952,6 +952,7 @@ describe("PUT /admin/surveys/:id/data-entries/:entryId", () => {
       label: "新ラベル",
       createdAt: new Date(),
       updatedAt: new Date(),
+      _count: { responses: 3 },
     });
 
     const app = createApp();
