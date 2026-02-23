@@ -6,7 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Vitest](https://img.shields.io/badge/Vitest-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev)
 
-アンケート作成・回答収集 API サーバー。
+[nisshi-dev Survey](https://github.com/nisshi-dev/nisshi-dev-survey) のバックエンド API サーバー。アンケート作成・回答収集・データ投入を提供する。
 
 | | URL |
 |---|---|
@@ -15,12 +15,43 @@
 | Swagger UI | https://nisshi-dev-survey-api.nisshi.workers.dev/ui |
 | Cloudflare Dashboard | [Workers > nisshi-dev-survey-api](https://dash.cloudflare.com/45e74bc4f7c04a2b396544c4b7c72812/workers/services/view/nisshi-dev-survey-api/production) |
 
+## アーキテクチャ
+
+```mermaid
+flowchart TB
+    subgraph Users
+        R["回答者"]
+        Admin["管理者"]
+        Agent["AI エージェント\n(Claude Code)"]
+    end
+
+    subgraph Frontend ["survey.nisshi.dev — Vercel"]
+        SPA["React SPA\nVite + HeroUI v3"]
+    end
+
+    subgraph Backend ["nisshi-dev-survey-api — Cloudflare Workers"]
+        API["Hono API\nPrisma + Valibot"]
+    end
+
+    R -- "回答" --> SPA
+    Admin -- "管理" --> SPA
+    SPA -- "fetch" --> API
+    Agent -- "Data API\n(API Key 認証)" --> API
+```
+
+| | フロントエンド | API（本リポ） |
+|---|---|---|
+| リポジトリ | [`nisshi-dev-survey`](https://github.com/nisshi-dev/nisshi-dev-survey) | `nisshi-dev-survey-api` |
+| デプロイ先 | Vercel | Cloudflare Workers |
+| Framework | Vite（SPA） | Hono |
+
 ## 技術スタック
 
 | レイヤー | 技術 |
 |---|---|
 | API | [Hono](https://hono.dev) |
 | DB | [Prisma](https://www.prisma.io) ORM 7 + PostgreSQL（`@prisma/adapter-pg`） |
+| 認証 | [better-auth](https://www.better-auth.com)（Google OAuth + セッション管理） |
 | バリデーション | [Valibot](https://valibot.dev) |
 | API ドキュメント | hono-openapi + Swagger UI |
 | メール送信 | [Resend](https://resend.com) |
@@ -30,11 +61,18 @@
 
 ## セットアップ
 
+### 前提条件
+
+- Node.js 24.x
+- npm 11.x
+
+### インストール
+
 ```bash
 npm install
 cp .dev.vars.example .dev.vars  # 環境変数を設定
 npm run db:migrate              # マイグレーション適用
-npm run db:seed                 # 管理者ユーザー作成
+npm run db:seed                 # 許可メールアドレス登録
 ```
 
 ## 開発
@@ -45,6 +83,19 @@ npm test          # Vitest ウォッチモード
 npm run test:run  # テスト1回実行
 ```
 
+### 主要コマンド
+
+| コマンド | 説明 |
+|---|---|
+| `npm run dev` | 開発サーバー起動（`wrangler dev`） |
+| `npm test` | Vitest ウォッチモード |
+| `npm run test:run` | テスト 1 回実行 |
+| `npm run check` | リント・フォーマット検査 |
+| `npm run fix` | 自動修正 |
+| `npm run db:migrate` | マイグレーション作成・適用 |
+| `npm run db:studio` | Prisma Studio 起動 |
+| `npm run generate:openapi` | OpenAPI JSON 出力（要: `npm run dev` 起動中） |
+
 ## デプロイ
 
 ```bash
@@ -52,12 +103,15 @@ npm run test:run  # テスト1回実行
 wrangler secret put DATABASE_URL
 wrangler secret put RESEND_API_KEY
 wrangler secret put NISSHI_DEV_SURVEY_API_KEY
+wrangler secret put GOOGLE_CLIENT_ID
+wrangler secret put GOOGLE_CLIENT_SECRET
+wrangler secret put BETTER_AUTH_SECRET
 
 # デプロイ
 npm run deploy
 ```
 
-`ALLOWED_ORIGINS` と `RESEND_FROM_EMAIL` は `wrangler.jsonc` の `vars` で管理。
+`ALLOWED_ORIGINS`, `RESEND_FROM_EMAIL`, `BETTER_AUTH_URL` は `wrangler.jsonc` の `vars` で管理。
 
 ## 環境変数
 
@@ -66,52 +120,66 @@ npm run deploy
 | `DATABASE_URL` | PostgreSQL 接続 URL | secret |
 | `RESEND_API_KEY` | Resend API キー | secret |
 | `NISSHI_DEV_SURVEY_API_KEY` | データ投入 API の認証キー | secret |
+| `GOOGLE_CLIENT_ID` | Google OAuth クライアント ID | secret |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth クライアントシークレット | secret |
+| `BETTER_AUTH_SECRET` | better-auth 暗号化シークレット（32 文字以上） | secret |
 | `ALLOWED_ORIGINS` | CORS 許可オリジン（カンマ区切り、`*` ワイルドカード対応） | `wrangler.jsonc` vars |
 | `RESEND_FROM_EMAIL` | メール送信元アドレス | `wrangler.jsonc` vars |
-| `ADMIN_EMAIL` | 管理者メールアドレス（seed 用） | `.dev.vars` |
-| `ADMIN_PASSWORD` | 管理者パスワード（seed 用） | `.dev.vars` |
+| `BETTER_AUTH_URL` | better-auth ベース URL | `wrangler.jsonc` vars |
+| `ADMIN_EMAIL` | 許可メールアドレス（seed 用） | `.dev.vars` |
 
 ## API エンドポイント
 
-### 回答者向け（認証不要）
+エンドポイントの詳細は [Swagger UI](https://nisshi-dev-survey-api.nisshi.workers.dev/ui) を参照。
 
-| メソッド | パス | 説明 |
+| カテゴリ | パスプレフィックス | 認証 |
 |---|---|---|
-| GET | `/survey/:id` | アンケート取得 |
-| POST | `/survey/:id/submit` | 回答送信 |
+| 回答者向け | `/survey` | 不要 |
+| 管理者向け | `/admin/auth`, `/admin/surveys` | better-auth セッション（Google OAuth） |
+| データ投入 API | `/data/surveys` | `X-API-Key` ヘッダー |
+| ユーティリティ | `/health`, `/doc`, `/ui` | 不要 |
 
-### 管理者向け（セッション Cookie 認証）
+## AI エージェント連携
 
-| メソッド | パス | 説明 |
-|---|---|---|
-| POST | `/admin/auth/login` | ログイン |
-| POST | `/admin/auth/logout` | ログアウト |
-| GET | `/admin/auth/me` | セッション確認 |
-| GET | `/admin/surveys` | アンケート一覧 |
-| POST | `/admin/surveys` | アンケート作成 |
-| GET | `/admin/surveys/:id` | アンケート詳細 |
-| PUT | `/admin/surveys/:id` | アンケート内容更新 |
-| PATCH | `/admin/surveys/:id` | ステータス更新 |
-| DELETE | `/admin/surveys/:id` | アンケート削除 |
-| GET | `/admin/surveys/:id/responses` | 回答一覧 |
+Claude Code のスキルを使い、対話的にアンケートの設計からデータ投入までを自動化できる。
 
-### データ投入 API（`X-API-Key` ヘッダー認証）
+```mermaid
+flowchart LR
+    A["/designing-surveys\nアンケート設計"] --> B["/nisshi-dev-survey\nデータ投入"]
+    B --> C["POST /data/surveys\nアンケート作成"]
+    C --> D["POST /data/surveys/:id/data-entries\nデータエントリ作成"]
+    D --> E["POST /data/surveys/:id/responses\n回答投入"]
+    E --> F["管理画面で\n結果確認"]
+```
 
-| メソッド | パス | 説明 |
-|---|---|---|
-| POST | `/data/surveys` | アンケート作成 |
-| GET | `/data/surveys` | アンケート一覧 |
-| GET | `/data/surveys/:id` | アンケート詳細 |
-| POST | `/data/surveys/:id/responses` | 回答一括投入 |
-| POST | `/data/surveys/:id/data-entries` | データエントリ作成 |
+| スキル | 役割 |
+|---|---|
+| `/designing-surveys` | アンケート設計のベストプラクティスに基づき、質問・回答タイプ・パラメータを設計 |
+| `/nisshi-dev-survey` | Data API を使ってアンケート作成・データエントリ作成・回答投入を実行 |
 
-### ユーティリティ
+## Claude Code Skills
 
-| メソッド | パス | 説明 |
-|---|---|---|
-| GET | `/health` | ヘルスチェック |
-| GET | `/doc` | OpenAPI JSON |
-| GET | `/ui` | Swagger UI |
+| スキル | 説明 |
+|---|---|
+| `/nisshi-dev-survey` | Data API でアンケート作成・データエントリ作成・回答投入を自動化 |
+| `/designing-surveys` | アンケート設計のベストプラクティスに基づく設計支援 |
+| `/test-driven-development` | TDD の Red-Green-Refactor サイクルに従った開発 |
+| `/vitest` | Vitest のテスト作成・モック・カバレッジ設定 |
+| `/hono` | Hono アプリケーション開発のドキュメント参照 |
+| `/prisma-expert` | Prisma スキーマ設計・マイグレーション・クエリ最適化 |
+| `/better-auth-best-practices` | better-auth の統合・セッション管理・セキュリティ |
+| `/email-best-practices` | メール送信・迷惑メール対策・法令遵守 |
+| `/brainstorming` | 機能実装前の要件・設計の深掘り |
+| `/cloudflare` | Cloudflare Workers / KV / D1 / R2 の開発 |
+
+## テスト
+
+TDD（テスト駆動開発）で開発している。実装コードより先にテストを書く。
+
+```bash
+npm run test:run       # テストを1回実行
+npm test               # ウォッチモードで起動
+```
 
 ## ドキュメント
 
