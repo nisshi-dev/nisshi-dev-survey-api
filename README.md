@@ -11,7 +11,6 @@
 | | URL |
 |---|---|
 | Production | https://nisshi-dev-survey-api.nisshi.workers.dev |
-| Health Check | https://nisshi-dev-survey-api.nisshi.workers.dev/health |
 | Swagger UI | https://nisshi-dev-survey-api.nisshi.workers.dev/ui |
 | Cloudflare Dashboard | [Workers > nisshi-dev-survey-api](https://dash.cloudflare.com/45e74bc4f7c04a2b396544c4b7c72812/workers/services/view/nisshi-dev-survey-api/production) |
 
@@ -59,75 +58,6 @@ flowchart TB
 | デプロイ | [Cloudflare Workers](https://workers.cloudflare.com) |
 | リント・フォーマット | [Ultracite](https://github.com/haydenbleasel/ultracite)（Biome） |
 
-## セットアップ
-
-### 前提条件
-
-- Node.js 24.x
-- npm 11.x
-
-### インストール
-
-```bash
-npm install
-cp .dev.vars.example .dev.vars  # 環境変数を設定
-npm run db:migrate              # マイグレーション適用
-npm run db:seed                 # 許可メールアドレス登録
-```
-
-## 開発
-
-```bash
-npm run dev       # wrangler dev でローカルサーバー起動
-npm test          # Vitest ウォッチモード
-npm run test:run  # テスト1回実行
-```
-
-### 主要コマンド
-
-| コマンド | 説明 |
-|---|---|
-| `npm run dev` | 開発サーバー起動（`wrangler dev`） |
-| `npm test` | Vitest ウォッチモード |
-| `npm run test:run` | テスト 1 回実行 |
-| `npm run check` | リント・フォーマット検査 |
-| `npm run fix` | 自動修正 |
-| `npm run db:migrate` | マイグレーション作成・適用 |
-| `npm run db:studio` | Prisma Studio 起動 |
-| `npm run generate:openapi` | OpenAPI JSON 出力（要: `npm run dev` 起動中） |
-
-## デプロイ
-
-```bash
-# シークレット設定（初回のみ）
-wrangler secret put DATABASE_URL
-wrangler secret put RESEND_API_KEY
-wrangler secret put NISSHI_DEV_SURVEY_API_KEY
-wrangler secret put GOOGLE_CLIENT_ID
-wrangler secret put GOOGLE_CLIENT_SECRET
-wrangler secret put BETTER_AUTH_SECRET
-
-# デプロイ
-npm run deploy
-```
-
-`ALLOWED_ORIGINS`, `RESEND_FROM_EMAIL`, `BETTER_AUTH_URL` は `wrangler.jsonc` の `vars` で管理。
-
-## 環境変数
-
-| 変数 | 説明 | 設定先 |
-|---|---|---|
-| `DATABASE_URL` | PostgreSQL 接続 URL | secret |
-| `RESEND_API_KEY` | Resend API キー | secret |
-| `NISSHI_DEV_SURVEY_API_KEY` | データ投入 API の認証キー | secret |
-| `GOOGLE_CLIENT_ID` | Google OAuth クライアント ID | secret |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth クライアントシークレット | secret |
-| `BETTER_AUTH_SECRET` | better-auth 暗号化シークレット（32 文字以上） | secret |
-| `ALLOWED_ORIGINS` | CORS 許可オリジン（カンマ区切り、`*` ワイルドカード対応） | `wrangler.jsonc` vars |
-| `RESEND_FROM_EMAIL` | メール送信元アドレス | `wrangler.jsonc` vars |
-| `BETTER_AUTH_URL` | better-auth ベース URL | `wrangler.jsonc` vars |
-| `ADMIN_EMAIL` | 許可メールアドレス（seed 用） | `.dev.vars` |
-
 ## API エンドポイント
 
 エンドポイントの詳細は [Swagger UI](https://nisshi-dev-survey-api.nisshi.workers.dev/ui) を参照。
@@ -152,11 +82,6 @@ flowchart LR
     E --> F["管理画面で\n結果確認"]
 ```
 
-| スキル | 役割 |
-|---|---|
-| `/designing-surveys` | アンケート設計のベストプラクティスに基づき、質問・回答タイプ・パラメータを設計 |
-| `/nisshi-dev-survey` | Data API を使ってアンケート作成・データエントリ作成・回答投入を実行 |
-
 ## Claude Code Skills
 
 | スキル | 説明 |
@@ -172,16 +97,72 @@ flowchart LR
 | `/brainstorming` | 機能実装前の要件・設計の深掘り |
 | `/cloudflare` | Cloudflare Workers / KV / D1 / R2 の開発 |
 
-## テスト
+## セットアップ
 
-TDD（テスト駆動開発）で開発している。実装コードより先にテストを書く。
+### 前提条件
+
+- Node.js 24.x
+- npm 11.x
+
+### インストール
 
 ```bash
-npm run test:run       # テストを1回実行
-npm test               # ウォッチモードで起動
+npm install
+cp .dev.vars.example .dev.vars  # 環境変数を設定
+npm run db:migrate              # マイグレーション適用
+npm run db:seed                 # 許可メールアドレス登録
 ```
 
+### 環境変数
+
+| 変数 | 説明 | 設定先 |
+|---|---|---|
+| `DATABASE_URL` | PostgreSQL 接続 URL | secret |
+| `RESEND_API_KEY` | Resend API キー | secret |
+| `NISSHI_DEV_SURVEY_API_KEY` | データ投入 API の認証キー | secret |
+| `GOOGLE_CLIENT_ID` | Google OAuth クライアント ID | secret |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth クライアントシークレット | secret |
+| `BETTER_AUTH_SECRET` | better-auth 暗号化シークレット（32 文字以上） | secret |
+| `ALLOWED_ORIGINS` | CORS 許可オリジン（カンマ区切り、`*` ワイルドカード対応） | `wrangler.jsonc` vars |
+| `RESEND_FROM_EMAIL` | メール送信元アドレス | `wrangler.jsonc` vars |
+| `BETTER_AUTH_URL` | better-auth ベース URL | `wrangler.jsonc` vars |
+| `ADMIN_EMAIL` | 許可メールアドレス（seed 用） | `.dev.vars` |
+
+## 開発
+
+### 主要コマンド
+
+| コマンド | 説明 |
+|---|---|
+| `npm run dev` | 開発サーバー起動（`wrangler dev`） |
+| `npm test` | Vitest ウォッチモード |
+| `npm run test:run` | テスト 1 回実行（TDD で開発） |
+| `npm run check` | リント・フォーマット検査 |
+| `npm run fix` | 自動修正 |
+| `npm run db:migrate` | マイグレーション作成・適用 |
+| `npm run db:studio` | Prisma Studio 起動 |
+| `npm run generate:openapi` | OpenAPI JSON 出力（要: `npm run dev` 起動中） |
+
+## デプロイ
+
+```bash
+# シークレット設定（初回のみ）
+wrangler secret put DATABASE_URL
+wrangler secret put RESEND_API_KEY
+wrangler secret put NISSHI_DEV_SURVEY_API_KEY
+wrangler secret put GOOGLE_CLIENT_ID
+wrangler secret put GOOGLE_CLIENT_SECRET
+wrangler secret put BETTER_AUTH_SECRET
+
+# デプロイ
+npm run deploy
+```
+
+`ALLOWED_ORIGINS`, `RESEND_FROM_EMAIL`, `BETTER_AUTH_URL` は `wrangler.jsonc` の `vars` で管理。
+
 ## ドキュメント
+
+詳細は [CLAUDE.md](CLAUDE.md) および [docs/](docs/) を参照。
 
 | ドキュメント | 内容 |
 |---|---|
@@ -190,13 +171,6 @@ npm test               # ウォッチモードで起動
 | [docs/coding-rules.md](docs/coding-rules.md) | コーディングルール |
 | [docs/validation.md](docs/validation.md) | バリデーション方針（Valibot） |
 | [docs/git-guidelines.md](docs/git-guidelines.md) | Git ガイドライン |
-
-## 関連リポジトリ
-
-| リポジトリ | ドメイン | 説明 |
-|---|---|---|
-| [`nisshi-dev-survey`](https://github.com/nisshi-dev/nisshi-dev-survey) | survey.nisshi.dev | フロントエンド（Vite SPA） |
-| `nisshi-dev-survey-api` | nisshi-dev-survey-api.nisshi.workers.dev | API サーバー（本リポ） |
 
 ## License
 
