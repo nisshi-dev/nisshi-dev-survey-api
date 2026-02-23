@@ -130,13 +130,20 @@ npm run db:seed                 # 許可メールアドレス登録
 
 ## 開発
 
+TDD（テスト駆動開発）で開発している。実装コードより先にテストを書く。
+
+```bash
+npm run dev       # wrangler dev でローカルサーバー起動
+npm run test:run  # テスト1回実行
+```
+
 ### 主要コマンド
 
 | コマンド | 説明 |
 |---|---|
 | `npm run dev` | 開発サーバー起動（`wrangler dev`） |
 | `npm test` | Vitest ウォッチモード |
-| `npm run test:run` | テスト 1 回実行（TDD で開発） |
+| `npm run test:run` | テスト 1 回実行 |
 | `npm run check` | リント・フォーマット検査 |
 | `npm run fix` | 自動修正 |
 | `npm run db:migrate` | マイグレーション作成・適用 |
