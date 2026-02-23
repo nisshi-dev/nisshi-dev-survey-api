@@ -15,13 +15,6 @@ export const ErrorResponseSchema = object({
 });
 
 /**
- * 成功レスポンス（メッセージのみ）
- */
-export const MessageResponseSchema = object({
-  message: string(),
-});
-
-/**
  * パスパラメータ: :id + :entryId（データエントリ操作用）
  */
 export const EntryIdParamSchema = object({

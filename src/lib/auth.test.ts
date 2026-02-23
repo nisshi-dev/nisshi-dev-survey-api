@@ -114,7 +114,7 @@ describe("createAuth", () => {
     const beforeHook = options?.databaseHooks?.user?.create?.before;
     expect(beforeHook).toBeDefined();
 
-    const result = await beforeHook!(
+    const result = await beforeHook?.(
       { email: "ok@example.com", name: "Test" } as never,
       {} as never
     );
@@ -137,7 +137,7 @@ describe("createAuth", () => {
     const options = mockBetterAuth.mock.calls[0]?.[0];
     const beforeHook = options?.databaseHooks?.user?.create?.before;
 
-    const result = await beforeHook!(
+    const result = await beforeHook?.(
       { email: "unknown@example.com", name: "Bad" } as never,
       {} as never
     );

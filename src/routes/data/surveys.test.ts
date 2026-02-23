@@ -653,6 +653,7 @@ describe("PUT /data/surveys/:id/data-entries/:entryId", () => {
       label: "GENkaigi 2026 スタッフ",
       createdAt,
       updatedAt: new Date(),
+      _count: { responses: 5 },
     });
 
     const app = createApp();
@@ -673,7 +674,7 @@ describe("PUT /data/surveys/:id/data-entries/:entryId", () => {
     expect(body.id).toBe("entry-1");
     expect(body.values).toEqual({ event: "GENkaigi 2026" });
     expect(body.label).toBe("GENkaigi 2026 スタッフ");
-    expect(body.responseCount).toBe(0);
+    expect(body.responseCount).toBe(5);
   });
 
   test("存在しないエントリ ID で 404 を返す", async () => {

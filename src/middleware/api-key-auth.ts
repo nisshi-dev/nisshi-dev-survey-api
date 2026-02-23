@@ -6,7 +6,7 @@ const encoder = new TextEncoder();
 async function timingSafeCompare(a: string, b: string): Promise<boolean> {
   const key = await crypto.subtle.importKey(
     "raw",
-    encoder.encode(a),
+    crypto.getRandomValues(new Uint8Array(32)),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign", "verify"]
@@ -26,10 +26,7 @@ export const apiKeyAuth: MiddlewareHandler<HonoEnv> = async (c, next) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  if (
-    expected.length !== provided.length ||
-    !(await timingSafeCompare(expected, provided))
-  ) {
+  if (!(await timingSafeCompare(expected, provided))) {
     return c.json({ error: "Unauthorized" }, 401);
   }
 

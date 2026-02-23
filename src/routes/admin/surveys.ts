@@ -467,23 +467,29 @@ app.put(
   validator("json", UpdateDataEntrySchema),
   async (c) => {
     const prisma = c.get("prisma");
-    const { entryId } = c.req.valid("param");
+    const { id, entryId } = c.req.valid("param");
     const { values, label } = c.req.valid("json");
 
     const existing = await prisma.surveyDataEntry.findUnique({
-      where: { id: entryId },
+      where: { id: entryId, surveyId: id },
       include: { survey: { select: { params: true } } },
     });
     if (!existing) {
       return c.json({ error: "Data entry not found" }, 404);
     }
 
+    const error = validateDataEntryKeys(values, existing.survey.params);
+    if (error) {
+      return c.json({ error }, 400);
+    }
+
     const entry = await prisma.surveyDataEntry.update({
       where: { id: entryId },
       data: { values, label: label ?? null },
+      include: { _count: { select: { responses: true } } },
     });
 
-    return c.json(buildDataEntryResponse(entry, 0));
+    return c.json(buildDataEntryResponse(entry, entry._count.responses));
   }
 );
 
@@ -517,10 +523,10 @@ app.delete(
   validator("param", EntryIdParamSchema),
   async (c) => {
     const prisma = c.get("prisma");
-    const { entryId } = c.req.valid("param");
+    const { id, entryId } = c.req.valid("param");
 
     const existing = await prisma.surveyDataEntry.findUnique({
-      where: { id: entryId },
+      where: { id: entryId, surveyId: id },
       include: { _count: { select: { responses: true } } },
     });
     if (!existing) {
