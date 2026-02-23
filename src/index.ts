@@ -68,7 +68,7 @@ app.get(
     documentation: {
       info: {
         title: "nisshi-dev Survey API",
-        version: "1.0.0",
+        version: "0.5.0",
         description: "アンケート作成・回答収集 API",
       },
       servers: [{ url: "/" }],
